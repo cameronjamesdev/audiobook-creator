@@ -954,6 +954,49 @@ ${textBlock}
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
+    },
+
+    exportLibrary() {
+        const library = JSON.parse(localStorage.getItem(this.libraryKey) || '[]');
+        if (library.length === 0) return alert('Your library is empty — nothing to export.');
+        
+        const blob = new Blob([JSON.stringify(library)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `audiobooks_${this.currentUser.id}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        alert(`Exported ${library.length} book(s). Import this file on any device to restore your library.`);
+    },
+
+    importLibrary() {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.json';
+        input.onchange = (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = () => {
+                try {
+                    const imported = JSON.parse(reader.result);
+                    if (!Array.isArray(imported)) throw new Error('Invalid format');
+                    const existing = JSON.parse(localStorage.getItem(this.libraryKey) || '[]');
+                    const existingIds = new Set(existing.map(b => b.id));
+                    const newBooks = imported.filter(b => !existingIds.has(b.id));
+                    localStorage.setItem(this.libraryKey, JSON.stringify([...newBooks, ...existing]));
+                    this.updateLibraryUI();
+                    alert(`✅ Imported ${newBooks.length} book(s) into ${this.currentUser.name}'s library!`);
+                } catch(err) {
+                    alert('Import failed — the file does not appear to be a valid library export.');
+                }
+            };
+            reader.readAsText(file);
+        };
+        input.click();
     }
 };
 

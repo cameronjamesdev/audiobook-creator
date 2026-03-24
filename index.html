@@ -174,6 +174,14 @@
                 <div id="libraryList" style="display: flex; flex-direction: column; gap: 10px;">
                     <p style="color:var(--text-app-muted); font-size: 0.9rem;">Your library is empty.</p>
                 </div>
+                <div style="display: flex; gap: 8px; margin-top: 14px;">
+                    <button class="btn-secondary" onclick="app.exportLibrary()" style="flex: 1; padding: 0.5rem 0.6rem; font-size: 0.8rem; display: flex; align-items: center; justify-content: center; gap: 5px;">
+                        <i data-lucide="download" style="width:13px;height:13px;"></i> Export
+                    </button>
+                    <button class="btn-secondary" onclick="app.importLibrary()" style="flex: 1; padding: 0.5rem 0.6rem; font-size: 0.8rem; display: flex; align-items: center; justify-content: center; gap: 5px; border-color: var(--accent-app); color: var(--accent-app);">
+                        <i data-lucide="upload" style="width:13px;height:13px;"></i> Import
+                    </button>
+                </div>
             </div>
 
         </aside>
