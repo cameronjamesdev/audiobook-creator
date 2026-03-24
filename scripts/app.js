@@ -94,21 +94,27 @@ const app = {
 
         // Migrate legacy unnamespaced library to Cameron's profile (one-time)
         if (user.id === 'cameron') {
-            const legacy = localStorage.getItem('audiobook_library');
-            if (legacy && !localStorage.getItem('legacy_migrated_cameron')) {
-                const legacyLibrary = JSON.parse(legacy);
-                if (legacyLibrary.length > 0) {
-                    legacyLibrary.forEach(b => {
-                        db.collection("users").doc(user.id).collection("books").doc(b.id || `legacy_${Date.now()}_${Math.random()}`).set({
+            // Check both the original old 'audiobook_library' and the intermediate 'audiobook_library_cameron'
+            const veryOldLegacy = localStorage.getItem('audiobook_library');
+            const intermediateLegacy = localStorage.getItem('audiobook_library_cameron');
+            
+            if (!localStorage.getItem('legacy_migrated_cameron_cloud')) {
+                let toMigrate = [];
+                if (veryOldLegacy) toMigrate = toMigrate.concat(JSON.parse(veryOldLegacy));
+                if (intermediateLegacy) toMigrate = toMigrate.concat(JSON.parse(intermediateLegacy));
+                
+                if (toMigrate.length > 0) {
+                    toMigrate.forEach(b => {
+                        db.collection("users").doc(user.id).collection("books").doc(b.id || `legacy_${Date.now()}_${Math.random().toString(36).substr(2)}`).set({
                             title: b.title,
                             date: b.date,
                             pages: b.pages,
-                            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                            createdAt: window.firebase.firestore.FieldValue.serverTimestamp()
                         }, { merge: true });
                     });
                 }
-                localStorage.setItem('legacy_migrated_cameron', 'true');
-                console.log('[Auth] Migrated legacy local library to Cameron cloud profile.');
+                localStorage.setItem('legacy_migrated_cameron_cloud', 'true');
+                console.log('[Auth] Migrated legacy local libraries to Cameron cloud profile.');
             }
         }
 
