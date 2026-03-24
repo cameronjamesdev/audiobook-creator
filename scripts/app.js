@@ -1,5 +1,19 @@
+// ── Firebase Configuration ────────────────────────────────────────────────────
+const firebaseConfig = {
+    apiKey: "AIzaSyDiVDXFxvzX6EuXfkCCpCpJwbm9OJxs5CQ",
+    authDomain: "audiobook-creator-33917.firebaseapp.com",
+    projectId: "audiobook-creator-33917",
+    storageBucket: "audiobook-creator-33917.firebasestorage.app",
+    messagingSenderId: "106294143966",
+    appId: "1:106294143966:web:75b82a3783cd4bdaa70b4f"
+};
+if (!window.firebase.apps.length) {
+    window.firebase.initializeApp(firebaseConfig);
+}
+const db = window.firebase.firestore();
+
 // ── User Profiles ─────────────────────────────────────────────────────────────
-// Credentials and API keys per user. Library storage is namespaced by user ID.
+// Credentials and API keys per user. Library storage is managed in Firestore.
 const USERS = [
     {
         id: 'cameron',
@@ -39,12 +53,10 @@ const app = {
     currentFileBase64: null,
     currentFileMime: null,
     currentUser: null,
+    unsubFirestore: null,
+    cloudLibraryCache: [],
 
     // ── Auth ───────────────────────────────────────────────────────────────────
-
-    get libraryKey() {
-        return 'audiobook_library_' + (this.currentUser?.id || 'guest');
-    },
 
     checkSession() {
         const saved = sessionStorage.getItem('abc_session');
@@ -83,10 +95,20 @@ const app = {
         // Migrate legacy unnamespaced library to Cameron's profile (one-time)
         if (user.id === 'cameron') {
             const legacy = localStorage.getItem('audiobook_library');
-            if (legacy && !localStorage.getItem(this.libraryKey)) {
-                localStorage.setItem(this.libraryKey, legacy);
-                localStorage.removeItem('audiobook_library');
-                console.log('[Auth] Migrated legacy library to cameron profile.');
+            if (legacy && !localStorage.getItem('legacy_migrated_cameron')) {
+                const legacyLibrary = JSON.parse(legacy);
+                if (legacyLibrary.length > 0) {
+                    legacyLibrary.forEach(b => {
+                        db.collection("users").doc(user.id).collection("books").doc(b.id || `legacy_${Date.now()}_${Math.random()}`).set({
+                            title: b.title,
+                            date: b.date,
+                            pages: b.pages,
+                            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                        }, { merge: true });
+                    });
+                }
+                localStorage.setItem('legacy_migrated_cameron', 'true');
+                console.log('[Auth] Migrated legacy local library to Cameron cloud profile.');
             }
         }
 
@@ -94,6 +116,12 @@ const app = {
     },
 
     logout() {
+        if (this.unsubFirestore) {
+            this.unsubFirestore();
+            this.unsubFirestore = null;
+        }
+        this.cloudLibraryCache = [];
+        
         sessionStorage.removeItem('abc_session');
         this.currentUser = null;
         this.pages = [];
@@ -124,7 +152,7 @@ const app = {
         lucide.createIcons();
         this.changeTheme(document.getElementById('themeChoice').value);
         this.changeFont(document.getElementById('fontChoice').value);
-        this.updateLibraryUI();
+        this.setupFirestoreListener();
     },
 
     init() {
@@ -870,31 +898,31 @@ ${textBlock}
         return parsedPages;
     },
 
-    saveCurrentBook() {
+    async saveCurrentBook() {
         if (!this.pages || this.pages.length === 0) return alert("No active document loaded to save!");
         const title = prompt("Enter a title for this Audiobook in your library:", "My Saved Book");
         if (!title) return;
         
         const id = 'book_' + Date.now();
         const bookData = {
-            id,
             title,
             date: new Date().toLocaleDateString(),
-            pages: this.pages
+            pages: this.pages,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
         };
         
-        let library = JSON.parse(localStorage.getItem(this.libraryKey) || '[]');
-        library.push(bookData);
-        localStorage.setItem(this.libraryKey, JSON.stringify(library));
-        
-        this.updateLibraryUI();
-        alert("Saved to " + this.currentUser.name + "'s Library successfully!");
+        try {
+            await db.collection("users").doc(this.currentUser.id).collection("books").doc(id).set(bookData);
+            alert("Saved to " + this.currentUser.name + "'s Cloud Library successfully!");
+        } catch (e) {
+            console.error("Save error:", e);
+            alert("Failed to save audiobook to cloud.");
+        }
     },
     
     loadFromLibrary(id) {
-        let library = JSON.parse(localStorage.getItem(this.libraryKey) || '[]');
-        let book = library.find(b => b.id === id);
-        if (!book) return alert("Book not found!");
+        let book = this.cloudLibraryCache.find(b => b.id === id);
+        if (!book) return alert("Book not found in cloud!");
         
         this.pages = book.pages;
         this.currentPageIndex = 0;
@@ -903,37 +931,60 @@ ${textBlock}
         this.stopAudio();
     },
     
-    deleteFromLibrary(id) {
-        if (!confirm("Are you sure you want to delete this serialized book memory?")) return;
-        let library = JSON.parse(localStorage.getItem(this.libraryKey) || '[]');
-        library = library.filter(b => b.id !== id);
-        localStorage.setItem(this.libraryKey, JSON.stringify(library));
-        this.updateLibraryUI();
+    async deleteFromLibrary(id) {
+        if (!confirm("Are you sure you want to delete this serialized book from the cloud?")) return;
+        try {
+            await db.collection("users").doc(this.currentUser.id).collection("books").doc(id).delete();
+        } catch (e) {
+            console.error("Delete error:", e);
+            alert("Failed to delete book from cloud.");
+        }
     },
     
-    updateLibraryUI() {
+    setupFirestoreListener() {
+        if (this.unsubFirestore) {
+            this.unsubFirestore();
+            this.unsubFirestore = null;
+        }
+
         const list = document.getElementById('libraryList');
         if (!list) return;
-        let library = JSON.parse(localStorage.getItem(this.libraryKey) || '[]');
-        
-        if (library.length === 0) {
-            list.innerHTML = '<p style="color:var(--text-app-muted); font-size: 0.9rem;">Your library is empty.</p>';
-            return;
-        }
-        
-        list.innerHTML = library.map(b => `
-            <div style="background: rgba(255,255,255,0.05); border: 1px solid var(--border-glass); padding: 10px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
-                <div style="overflow: hidden; flex: 1; padding-right: 10px;">
-                    <strong style="display: block; font-size: 0.9rem; text-overflow: ellipsis; white-space: nowrap; overflow: hidden;">${b.title}</strong>
-                    <span style="font-size: 0.75rem; color: var(--text-app-muted);">${b.pages.length} Pages • ${b.date}</span>
-                </div>
-                <div style="display: flex; gap: 5px;">
-                    <button class="btn-primary" onclick="app.loadFromLibrary('${b.id}')" style="padding: 4px 8px; font-size: 0.75rem;"><i data-lucide="play" style="width:12px;height:12px;"></i></button>
-                    <button class="btn-icon" onclick="app.deleteFromLibrary('${b.id}')" style="padding: 4px; color: #ff5e5e;"><i data-lucide="trash-2" style="width:12px;height:12px;"></i></button>
-                </div>
-            </div>
-        `).join('');
-        lucide.createIcons();
+
+        if (!this.currentUser) return;
+
+        list.innerHTML = '<p style="color:var(--text-app-muted); font-size: 0.9rem;">Syncing with cloud...</p>';
+
+        this.unsubFirestore = db.collection("users").doc(this.currentUser.id).collection("books")
+            .orderBy("createdAt", "desc")
+            .onSnapshot(snapshot => {
+                const library = [];
+                snapshot.forEach(doc => {
+                    library.push({ id: doc.id, ...doc.data() });
+                });
+                
+                this.cloudLibraryCache = library;
+                
+                if (library.length === 0) {
+                    list.innerHTML = '<p style="color:var(--text-app-muted); font-size: 0.9rem;">Your cloud library is empty.</p>';
+                } else {
+                    list.innerHTML = library.map(b => `
+                        <div style="background: rgba(255,255,255,0.05); border: 1px solid var(--border-glass); padding: 10px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                            <div style="overflow: hidden; flex: 1; padding-right: 10px;">
+                                <strong style="display: block; font-size: 0.9rem; text-overflow: ellipsis; white-space: nowrap; overflow: hidden;">${b.title}</strong>
+                                <span style="font-size: 0.75rem; color: var(--text-app-muted);">${b.pages ? b.pages.length : 0} Pages • ${b.date}</span>
+                            </div>
+                            <div style="display: flex; gap: 5px;">
+                                <button class="btn-primary" onclick="app.loadFromLibrary('${b.id}')" style="padding: 4px 8px; font-size: 0.75rem;"><i data-lucide="play" style="width:12px;height:12px;"></i></button>
+                                <button class="btn-icon" onclick="app.deleteFromLibrary('${b.id}')" style="padding: 4px; color: #ff5e5e;"><i data-lucide="trash-2" style="width:12px;height:12px;"></i></button>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+                lucide.createIcons();
+            }, err => {
+                console.error("Firestore sync error:", err);
+                list.innerHTML = '<p style="color:#ef4444; font-size: 0.9rem;">Failed to sync cloud library.</p>';
+            });
     },
 
     downloadWord() {
@@ -957,8 +1008,8 @@ ${textBlock}
     },
 
     exportLibrary() {
-        const library = JSON.parse(localStorage.getItem(this.libraryKey) || '[]');
-        if (library.length === 0) return alert('Your library is empty — nothing to export.');
+        const library = this.cloudLibraryCache || [];
+        if (library.length === 0) return alert('Your cloud library is empty — nothing to export.');
         
         const blob = new Blob([JSON.stringify(library)], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
@@ -969,7 +1020,7 @@ ${textBlock}
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
-        alert(`Exported ${library.length} book(s). Import this file on any device to restore your library.`);
+        alert(`Exported ${library.length} book(s) from cloud.`);
     },
 
     importLibrary() {
@@ -980,18 +1031,28 @@ ${textBlock}
             const file = e.target.files[0];
             if (!file) return;
             const reader = new FileReader();
-            reader.onload = () => {
+            reader.onload = async () => {
                 try {
                     const imported = JSON.parse(reader.result);
                     if (!Array.isArray(imported)) throw new Error('Invalid format');
-                    const existing = JSON.parse(localStorage.getItem(this.libraryKey) || '[]');
-                    const existingIds = new Set(existing.map(b => b.id));
-                    const newBooks = imported.filter(b => !existingIds.has(b.id));
-                    localStorage.setItem(this.libraryKey, JSON.stringify([...newBooks, ...existing]));
-                    this.updateLibraryUI();
-                    alert(`✅ Imported ${newBooks.length} book(s) into ${this.currentUser.name}'s library!`);
+                    
+                    document.getElementById('libraryList').innerHTML = '<p style="color:var(--text-app-muted); font-size: 0.9rem;">Uploading to cloud...</p>';
+                    let count = 0;
+                    for (const b of imported) {
+                        const id = b.id || `imported_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+                        await db.collection("users").doc(this.currentUser.id).collection("books").doc(id).set({
+                            title: b.title || "Imported Book",
+                            date: b.date || new Date().toLocaleDateString(),
+                            pages: b.pages,
+                            createdAt: b.createdAt || firebase.firestore.FieldValue.serverTimestamp()
+                        }, { merge: true });
+                        count++;
+                    }
+                    alert(`✅ Imported ${count} book(s) into ${this.currentUser.name}'s cloud library!`);
                 } catch(err) {
+                    console.error("Import error:", err);
                     alert('Import failed — the file does not appear to be a valid library export.');
+                    this.setupFirestoreListener(); // trigger a re-render
                 }
             };
             reader.readAsText(file);
