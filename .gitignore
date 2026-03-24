@@ -1,0 +1,15 @@
+# Exclude local test/sample documents
+Waterdeep* Dragon Heist*
+*.test.md
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor folders
+.vscode/
+.idea/
+
+# Node (future-proofing)
+node_modules/

@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audiobook Creator Pro</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Merriweather:wght@300;400;700&family=Orbitron:wght@400;700&family=Roboto+Mono:wght@400&family=Caveat:wght@400;500&family=Lora:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="styles/style.css">
+    
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    
+    <script type="importmap">
+      {
+        "imports": {
+          "@google/genai": "https://esm.run/@google/genai"
+        }
+      }
+    </script>
+</head>
+<body class="theme-modern font-sans size-medium">
+    <div id="app" class="app-container">
+
+        <!-- Left Configuration & Upload Sidebar -->
+        <aside class="panel-sidebar">
+            <div class="brand-header">
+                <i data-lucide="book-open"></i> Audiobook Creator
+            </div>
+
+            <!-- API Keys Group -->
+            <div class="config-section">
+                <h3>System Keys</h3>
+                <div class="form-group">
+                    <label>Gemini API Key (Parsing)</label>
+                    <input type="password" id="geminiKey" class="input-glass" placeholder="AIza...">
+                </div>
+                <div class="form-group">
+                    <label>OpenAI API Key (Voice TTS)</label>
+                    <input type="password" id="openAiKey" class="input-glass" placeholder="sk-...">
+                </div>
+            </div>
+
+            <!-- Upload Group -->
+            <div class="config-section">
+                <h3>Source Document</h3>
+                <div id="dropZone" class="file-drop-zone">
+                    <i data-lucide="file-up"></i>
+                    <p>Drop <strong>PDF</strong>, Word, Markdown, or Text File<br/><small>AI preserves standard formatting</small></p>
+                    <input type="file" id="fileInput" accept=".pdf,.txt,.md,.docx,image/*" style="display: none;">
+                </div>
+                <div id="uploadStatus" class="status-msg"></div>
+                
+                <textarea id="rawTextInput" class="input-glass mt-1 mb-1" rows="4" placeholder="Or paste raw text here..."></textarea>
+
+                <button class="btn-magic" onclick="app.processWithGemini()">
+                    <i data-lucide="sparkles"></i> Auto-Format & Parse
+                </button>
+                
+                <div id="activityLog" style="margin-top: 15px; font-size: 0.75rem; font-family: monospace; color: var(--text-app-muted); max-height: 150px; overflow-y: auto; background: rgba(0,0,0,0.2); padding: 8px; border-radius: 5px; display: none;"></div>
+            </div>
+
+            <!-- Display Settings -->
+            <div class="config-section">
+                <h3>Visual Settings</h3>
+                <div class="form-group">
+                    <label>Theme Variant</label>
+                    <select id="themeChoice" class="input-glass" onchange="app.changeTheme(this.value)">
+                        <option value="modern" selected>Modern Minimalist</option>
+                        <option value="fantasy">Spells & Parchment (D&D)</option>
+                        <option value="scifi">Sci-Fi Holo</option>
+                        <option value="academia">Dark Academia</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Font Family</label>
+                    <select id="fontChoice" class="input-glass" onchange="app.changeFont(this.value)">
+                        <option value="sans" selected>Clean / Sans-Serif</option>
+                        <option value="serif">Classic / Serif</option>
+                        <option value="merriweather">Fantasy (Merriweather)</option>
+                        <option value="mono">Technical / Mono</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Font Size</label>
+                    <div class="button-toggle-group" id="sizeToggle">
+                        <button class="toggle-btn" data-val="small" onclick="app.changeSize('small')">Small</button>
+                        <button class="toggle-btn active" data-val="medium" onclick="app.changeSize('medium')">Medium</button>
+                        <button class="toggle-btn" data-val="large" onclick="app.changeSize('large')">Large</button>
+                    </div>
+                </div>
+                
+                <div class="form-group mt-1">
+                    <label>Content Density</label>
+                    <select id="densityChoice" class="input-glass">
+                        <option value="sparse">Sparse (1 item / page)</option>
+                        <option value="moderate" selected>Moderate (Paragraphs)</option>
+                        <option value="dense">Dense (Textbook)</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Voice Settings -->
+            <div class="config-section">
+                <h3>Audio Narration</h3>
+                <div class="form-group">
+                    <label>Reading Tone</label>
+                    <select id="toneChoice" class="input-glass">
+                        <option value="casual" selected>Casual & Fluid</option>
+                        <option value="formal">Formal & Exact</option>
+                        <option value="dramatic">Dramatic & Epic</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Narrator Voice</label>
+                    <select id="voiceChoice" class="input-glass">
+                        <option value="fable" selected>Fable (British, Storyteller)</option>
+                        <option value="onyx">Onyx (Deep, Authoritative)</option>
+                        <option value="shimmer">Shimmer (Clear)</option>
+                        <option value="alloy">Alloy (Neutral)</option>
+                        <option value="nova">Nova (Bright)</option>
+                    </select>
+                </div>
+            </div>
+            
+            <!-- My Library Section -->
+            <div class="config-section" style="margin-bottom: 20px;">
+                <h3>My Saved Audiobooks</h3>
+                <p style="font-size:0.85rem; color:var(--text-app-muted); margin-bottom: 15px;">Your documents are securely saved to your local browser storage here.</p>
+                <div id="libraryList" style="display: flex; flex-direction: column; gap: 10px;">
+                    <p style="color:var(--text-app-muted); font-size: 0.9rem;">Your library is empty.</p>
+                </div>
+            </div>
+
+        </aside>
+
+        <!-- Right Reader Stage -->
+        <main class="panel-reader">
+            <div class="reader-toolbar" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                <div class="toolbar-stats" style="flex: 1; display: flex; align-items: center; gap: 15px;">
+                    <span id="pageCountBadge" class="badge">0 Pages</span>
+                    <span id="activeThemeBadge" class="badge accent">Modern Theme</span>
+
+                    <div style="display: flex; gap: 8px; align-items: center; background: rgba(125,125,125,0.05); padding: 5px 15px; border-radius: 50px; border: 1px solid var(--border-glass); margin-left: 10px;">
+                        <button class="btn-icon" onclick="app.prevChunk()" title="Previous Paragraph"><i data-lucide="skip-back"></i></button>
+                        <button class="btn-primary" onclick="app.toggleAudiobook()" style="border-radius: 50%; width: 40px; height: 40px; padding: 0; display: flex; align-items: center; justify-content: center;"><i id="playIcon" data-lucide="play"></i></button>
+                        <button class="btn-icon" onclick="app.stopAudio()" title="Stop Reading"><i data-lucide="square"></i></button>
+                        <button class="btn-icon" onclick="app.nextChunk()" title="Next Paragraph"><i data-lucide="skip-forward"></i></button>
+                        
+                        <div class="speed-control-group" style="border: none; font-size: 0.95rem; margin-left: 5px; padding-left: 10px;">
+                            <i data-lucide="gauge"></i>
+                            <input type="range" id="speedChoice" min="0.2" max="3" step="0.1" value="1.0" oninput="document.getElementById('speedIndicator').textContent = parseFloat(this.value).toFixed(1) + 'x'; if(app.audio) app.audio.playbackRate = this.value;">
+                            <span id="speedIndicator" style="width: 35px;">1.0x</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="narratorSubtitle" class="status-msg" style="display: none; margin: 0; position: absolute; left: 50%; transform: translateX(-50%); top: 75px; z-index: 100; background: rgba(0,0,0,0.8); color: white; padding: 5px 15px; border-radius: 20px;"></div>
+
+                <div class="toolbar-actions" style="flex: 1; display: flex; justify-content: flex-end; gap: 10px; align-items: center;">
+                    <button class="btn-icon" onclick="app.prevPage()" title="Previous Page"><i data-lucide="arrow-left"></i></button>
+                    <span id="pageIndicator" style="font-size: 0.85rem; font-weight: 500; min-width: 40px; text-align: center;">0/0</span>
+                    <button class="btn-icon" onclick="app.nextPage()" title="Next Page"><i data-lucide="arrow-right"></i></button>
+                    
+                    <div class="toolbar-divider"></div>
+                    <button class="btn-secondary" onclick="app.saveCurrentBook()" style="padding: 0.4rem 0.8rem; font-size: 0.8rem; display: flex; align-items: center; gap: 5px; border-color: var(--accent-app);"><i data-lucide="bookmark" style="width:14px; height:14px; color: var(--accent-app);"></i> Save</button>
+                    
+                    <div class="toolbar-divider"></div>
+                    <button class="btn-icon" onclick="app.toggleFullscreen()" title="Fullscreen Presentation"><i data-lucide="maximize" style="width:18px;height:18px;"></i></button>
+                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                        <button class="btn-secondary" onclick="app.downloadWord()" style="padding: 0.3rem 0.6rem; font-size: 0.75rem; display: flex; align-items: center; gap: 5px;"><i data-lucide="file-text" style="width:14px; height:14px;"></i> Word</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="reader-container">
+                <div id="readerContent" class="reader-canvas">
+                    <div class="empty-state">
+                        <i data-lucide="file-plus"></i>
+                        <p>Upload a document on the left and Auto-Format it to begin.</p>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+
+        <!-- Loading Overlay -->
+        <div id="loadingOverlay" class="loading-overlay" style="display: none;">
+            <div class="spinner"></div>
+            <h3 id="loadingText">Processing...</h3>
+        </div>
+
+    </div>
+
+    <script src="scripts/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,9 @@
+Google Gemini API key details
+
+API Key: AIzaSyC2lnOg7DR1-4NoryJqRgbk4JOxN6nytw8
+Name: Gemini Terminal
+Project name: projects864549493796: Project number
+864549493796z
+
+
+Read Aloud Open AI API: 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
