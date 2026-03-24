@@ -25,12 +25,49 @@
     </script>
 </head>
 <body class="theme-modern font-sans size-medium">
-    <div id="app" class="app-container">
+
+    <!-- ── Login Overlay ── -->
+    <div id="loginOverlay" class="login-overlay">
+        <div class="login-card">
+            <div class="login-brand">
+                <i data-lucide="book-open" class="login-icon"></i>
+                <h1>Audiobook Creator</h1>
+                <p>Sign in to your personal library</p>
+            </div>
+            <div class="login-form">
+                <div class="form-group">
+                    <label>Email Address</label>
+                    <input type="email" id="loginEmail" class="input-glass" placeholder="your@email.com" onkeydown="if(event.key==='Enter')app.login()">
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="loginPassword" class="input-glass" placeholder="••••••••" onkeydown="if(event.key==='Enter')app.login()">
+                </div>
+                <div id="loginError" class="login-error"></div>
+                <button class="btn-magic" onclick="app.login()" style="margin-top: 0.5rem;">
+                    <i data-lucide="log-in"></i> Sign In
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="app" class="app-container" style="display:none;">
 
         <!-- Left Configuration & Upload Sidebar -->
         <aside class="panel-sidebar">
-            <div class="brand-header">
-                <i data-lucide="book-open"></i> Audiobook Creator
+            <div class="brand-header" style="justify-content: space-between;">
+                <span style="display:flex;align-items:center;gap:0.8rem;"><i data-lucide="book-open"></i> Audiobook Creator</span>
+                <button class="btn-icon" onclick="app.logout()" title="Sign Out" style="padding: 6px; border-radius: 8px; color: var(--text-app-muted);">
+                    <i data-lucide="log-out" style="width:16px;height:16px;"></i>
+                </button>
+            </div>
+            <!-- User Profile Bar -->
+            <div id="userProfileBar" style="background: rgba(125,125,125,0.07); border: 1px solid var(--border-glass); border-radius: 10px; padding: 10px 14px; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 10px;">
+                <div style="width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, #a855f7, var(--accent-app)); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1rem; color: white; flex-shrink: 0;" id="userAvatar">C</div>
+                <div style="overflow: hidden;">
+                    <div style="font-weight: 600; font-size: 0.9rem;" id="userDisplayName">Cameron</div>
+                    <div style="font-size: 0.75rem; color: var(--text-app-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" id="userDisplayEmail">cameronjameslilley@outlook.com</div>
+                </div>
             </div>
 
             <!-- API Keys Group -->

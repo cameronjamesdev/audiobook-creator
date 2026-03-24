@@ -1,3 +1,32 @@
+// ── User Profiles ─────────────────────────────────────────────────────────────
+// Credentials and API keys per user. Library storage is namespaced by user ID.
+const USERS = [
+    {
+        id: 'cameron',
+        name: 'Cameron',
+        email: 'cameronjameslilley@outlook.com',
+        password: 'wereadbooks',
+        geminiKey: 'AIzaSyC2lnOg7DR1-4NoryJqRgbk4JOxN6nytw8',
+        openAiKey: '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'
+    },
+    {
+        id: 'jaz',
+        name: 'Jaz',
+        email: 'jazmanson@bigpond.com',
+        password: 'wereadbooks',
+        geminiKey: 'AIzaSyC2lnOg7DR1-4NoryJqRgbk4JOxN6nytw8',
+        openAiKey: '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'
+    },
+    {
+        id: 'shells',
+        name: 'Shells',
+        email: 'fromshells@yahoo.com.au',
+        password: 'wereadbooks',
+        geminiKey: 'AIzaSyC2lnOg7DR1-4NoryJqRgbk4JOxN6nytw8',
+        openAiKey: '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'
+    }
+];
+
 const app = {
     pages: [],
     currentPageIndex: 0,
@@ -9,13 +38,98 @@ const app = {
     
     currentFileBase64: null,
     currentFileMime: null,
+    currentUser: null,
 
-    init() {
+    // ── Auth ───────────────────────────────────────────────────────────────────
+
+    get libraryKey() {
+        return 'audiobook_library_' + (this.currentUser?.id || 'guest');
+    },
+
+    checkSession() {
+        const saved = sessionStorage.getItem('abc_session');
+        if (saved) {
+            try {
+                const user = JSON.parse(saved);
+                // Validate the user still exists in USERS
+                if (USERS.find(u => u.id === user.id)) {
+                    this.currentUser = user;
+                    this.startApp();
+                    return;
+                }
+            } catch(e) {}
+        }
+        // No session — show login screen
+        lucide.createIcons();
+    },
+
+    login() {
+        const email = (document.getElementById('loginEmail').value || '').trim().toLowerCase();
+        const password = document.getElementById('loginPassword').value;
+        const errEl = document.getElementById('loginError');
+
+        const user = USERS.find(u => u.email.toLowerCase() === email && u.password === password);
+        if (!user) {
+            errEl.textContent = 'Incorrect email or password. Please try again.';
+            document.getElementById('loginPassword').value = '';
+            document.getElementById('loginPassword').focus();
+            return;
+        }
+
+        errEl.textContent = '';
+        this.currentUser = user;
+        sessionStorage.setItem('abc_session', JSON.stringify({ id: user.id, name: user.name, email: user.email }));
+
+        // Migrate legacy unnamespaced library to Cameron's profile (one-time)
+        if (user.id === 'cameron') {
+            const legacy = localStorage.getItem('audiobook_library');
+            if (legacy && !localStorage.getItem(this.libraryKey)) {
+                localStorage.setItem(this.libraryKey, legacy);
+                localStorage.removeItem('audiobook_library');
+                console.log('[Auth] Migrated legacy library to cameron profile.');
+            }
+        }
+
+        this.startApp();
+    },
+
+    logout() {
+        sessionStorage.removeItem('abc_session');
+        this.currentUser = null;
+        this.pages = [];
+        this.stopAudio();
+        document.getElementById('app').style.display = 'none';
+        document.getElementById('loginOverlay').style.display = 'flex';
+        document.getElementById('loginEmail').value = '';
+        document.getElementById('loginPassword').value = '';
+        document.getElementById('loginError').textContent = '';
+        lucide.createIcons();
+    },
+
+    startApp() {
+        // Populate API keys from user profile
+        document.getElementById('geminiKey').value = this.currentUser.geminiKey || '';
+        document.getElementById('openAiKey').value = this.currentUser.openAiKey || '';
+
+        // Update user profile bar
+        document.getElementById('userDisplayName').textContent = this.currentUser.name;
+        document.getElementById('userDisplayEmail').textContent = this.currentUser.email;
+        document.getElementById('userAvatar').textContent = this.currentUser.name.charAt(0).toUpperCase();
+
+        // Show app, hide login
+        document.getElementById('loginOverlay').style.display = 'none';
+        document.getElementById('app').style.display = 'grid';
+
         this.setupEventListeners();
         lucide.createIcons();
         this.changeTheme(document.getElementById('themeChoice').value);
         this.changeFont(document.getElementById('fontChoice').value);
         this.updateLibraryUI();
+    },
+
+    init() {
+        lucide.createIcons();
+        this.checkSession();
     },
 
     setupEventListeners() {
@@ -769,16 +883,16 @@ ${textBlock}
             pages: this.pages
         };
         
-        let library = JSON.parse(localStorage.getItem('audiobook_library') || '[]');
+        let library = JSON.parse(localStorage.getItem(this.libraryKey) || '[]');
         library.push(bookData);
-        localStorage.setItem('audiobook_library', JSON.stringify(library));
+        localStorage.setItem(this.libraryKey, JSON.stringify(library));
         
         this.updateLibraryUI();
-        alert("Saved to My Library successfully!");
+        alert("Saved to " + this.currentUser.name + "'s Library successfully!");
     },
     
     loadFromLibrary(id) {
-        let library = JSON.parse(localStorage.getItem('audiobook_library') || '[]');
+        let library = JSON.parse(localStorage.getItem(this.libraryKey) || '[]');
         let book = library.find(b => b.id === id);
         if (!book) return alert("Book not found!");
         
@@ -791,16 +905,16 @@ ${textBlock}
     
     deleteFromLibrary(id) {
         if (!confirm("Are you sure you want to delete this serialized book memory?")) return;
-        let library = JSON.parse(localStorage.getItem('audiobook_library') || '[]');
+        let library = JSON.parse(localStorage.getItem(this.libraryKey) || '[]');
         library = library.filter(b => b.id !== id);
-        localStorage.setItem('audiobook_library', JSON.stringify(library));
+        localStorage.setItem(this.libraryKey, JSON.stringify(library));
         this.updateLibraryUI();
     },
     
     updateLibraryUI() {
         const list = document.getElementById('libraryList');
         if (!list) return;
-        let library = JSON.parse(localStorage.getItem('audiobook_library') || '[]');
+        let library = JSON.parse(localStorage.getItem(this.libraryKey) || '[]');
         
         if (library.length === 0) {
             list.innerHTML = '<p style="color:var(--text-app-muted); font-size: 0.9rem;">Your library is empty.</p>';

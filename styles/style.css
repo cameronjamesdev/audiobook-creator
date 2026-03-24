@@ -510,3 +510,101 @@ button { font-family: 'Inter', sans-serif; cursor: pointer; border-radius: 8px; 
     animation: spin 1s infinite cubic-bezier(0.55, 0.085, 0.68, 0.53); margin-bottom: 2rem;
 }
 @keyframes spin { 100% { transform: rotate(360deg); } }
+
+/* =========================================
+   Login Screen
+   ========================================= */
+.login-overlay {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: linear-gradient(135deg, #0d0d1a 0%, #1a0a2e 50%, #0a1628 100%);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 99999;
+    animation: fadeInLogin 0.4s ease;
+}
+
+@keyframes fadeInLogin {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideUpCard {
+    from { opacity: 0; transform: translateY(30px) scale(0.97); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.login-card {
+    background: rgba(255,255,255,0.04);
+    backdrop-filter: blur(30px);
+    -webkit-backdrop-filter: blur(30px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 24px;
+    padding: 3rem 3.5rem;
+    width: 100%;
+    max-width: 420px;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.05) inset;
+    animation: slideUpCard 0.5s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.login-brand {
+    text-align: center;
+    margin-bottom: 2.5rem;
+}
+
+.login-icon {
+    width: 52px !important;
+    height: 52px !important;
+    color: #a855f7;
+    filter: drop-shadow(0 0 20px rgba(168, 85, 247, 0.6));
+    margin-bottom: 1rem;
+}
+
+.login-brand h1 {
+    font-family: 'Inter', sans-serif;
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #ffffff;
+    margin-bottom: 0.4rem;
+    letter-spacing: -0.03em;
+}
+
+.login-brand p {
+    color: rgba(255,255,255,0.45);
+    font-size: 0.9rem;
+}
+
+.login-card .form-group label {
+    color: rgba(255,255,255,0.6);
+    font-size: 0.82rem;
+    font-weight: 500;
+    margin-bottom: 0.4rem;
+}
+
+.login-card .input-glass {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.12);
+    color: #ffffff;
+    font-size: 0.95rem;
+    padding: 0.75rem 1rem;
+    border-radius: 10px;
+    transition: all 0.2s ease;
+}
+
+.login-card .input-glass:focus {
+    border-color: #a855f7;
+    box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.25);
+    background: rgba(255,255,255,0.09);
+}
+
+.login-card .input-glass::placeholder {
+    color: rgba(255,255,255,0.25);
+}
+
+.login-error {
+    color: #ff6b6b;
+    font-size: 0.83rem;
+    text-align: center;
+    min-height: 1.2rem;
+    margin-bottom: 0.25rem;
+    animation: fadeInLogin 0.2s ease;
+}
+
