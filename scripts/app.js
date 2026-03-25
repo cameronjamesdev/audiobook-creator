@@ -44,6 +44,7 @@ const USERS = [
 const app = {
     pages: [],
     currentPageIndex: 0,
+    currentBookId: null,
     currentPlaybackId: 0,
     currentChunkIndex: 0,
     currentNodes: [],
@@ -298,6 +299,9 @@ const app = {
             const prompt = `
             You are a hyper-accurate AI Document Parser. Your sole objective is to extract EVERY SINGLE ITEM (e.g., every individual spell, rule, or chapter) from the attached source document. YOU MUST NOT SUMMARIZE. YOU MUST NOT SKIP ANYTHING.
 
+            CRITICAL AUDIO SYNC RULE:
+            Because our Text-To-Speech engine highlights text paragraph-by-paragraph, you MUST aggressively break down long blocks of text into smaller <p> tags of NO MORE THAN 2 to 3 sentences each. If you encounter a massive block of text, split it logically across multiple <p> tags. Do not output massive paragraphs spanning many sentences.
+
             FORMAT TEMPLATE (Strictly use for each and every item):
             <PAGE_BREAK>
             TITLE: [Main Heading or Spell Name]
@@ -376,6 +380,7 @@ const app = {
             
             this.logActivity(`Execution Pipeline configured for ${textChunks.length} blocks. Beginning transmission...`);
             this.pages = [];
+            this.currentBookId = null; // Clear ID for newly generated book
 
             for (let chunkIdx = 0; chunkIdx < textChunks.length; chunkIdx++) {
                 // Update loading overlay with live progress from the very first block
@@ -584,6 +589,11 @@ ${textBlock}
 
     updateReaderStage() {
         document.getElementById('pageIndicator').textContent = (this.currentPageIndex + 1) + " / " + (this.pages.length || 0);
+        
+        if (this.currentBookId) {
+            localStorage.setItem('abc_progress_' + this.currentBookId, this.currentPageIndex);
+        }
+        
         const stage = document.getElementById('readerContent');
         
         if (this.pages.length === 0) return;
@@ -880,6 +890,21 @@ ${textBlock}
                 await new Promise(resolve => {
                     this.audio.onended = resolve;
                     this.audio.onerror = resolve; // Skip on error
+                    
+                    this.audio.ontimeupdate = () => {
+                        if (!this.audio.duration || document.querySelector('.active-reading-highlight') === null) return;
+                        const activeNode = document.querySelector('.active-reading-highlight');
+                        const pageContent = activeNode.closest('.page-content');
+                        if (pageContent) {
+                            const progress = this.audio.currentTime / this.audio.duration;
+                            if (activeNode.offsetHeight > pageContent.clientHeight * 0.6) {
+                                const nodeTop = activeNode.offsetTop - pageContent.offsetTop;
+                                const scrollTarget = nodeTop + (activeNode.offsetHeight * progress) - (pageContent.clientHeight / 2);
+                                // Directly assign for smooth tracking, CSS handles scroll behavior automatically if needed
+                                pageContent.scrollTop = Math.max(0, scrollTarget);
+                            }
+                        }
+                    };
                 });
 
                 if (this.currentPlaybackId === playbackId) {
@@ -956,7 +981,9 @@ ${textBlock}
         const title = prompt("Enter a title for this Audiobook in your library:", "My Saved Book");
         if (!title) return;
         
-        const id = 'book_' + Date.now();
+        const id = this.currentBookId || 'book_' + Date.now();
+        this.currentBookId = id;
+        
         const bookData = {
             title,
             date: new Date().toLocaleDateString(),
@@ -965,7 +992,7 @@ ${textBlock}
         };
         
         try {
-            await db.collection("users").doc(this.currentUser.id).collection("books").doc(id).set(bookData);
+            await db.collection("users").doc(this.currentUser.id).collection("books").doc(id).set(bookData, { merge: true });
             alert("Saved to " + this.currentUser.name + "'s Cloud Library successfully!");
         } catch (e) {
             console.error("Save error:", e);
@@ -977,8 +1004,13 @@ ${textBlock}
         let book = this.cloudLibraryCache.find(b => b.id === id);
         if (!book) return alert("Book not found in cloud!");
         
+        this.currentBookId = id;
         this.pages = book.pages;
-        this.currentPageIndex = 0;
+        
+        const savedPage = localStorage.getItem('abc_progress_' + id);
+        this.currentPageIndex = savedPage ? parseInt(savedPage) : 0;
+        if (this.currentPageIndex >= this.pages.length) this.currentPageIndex = 0;
+        
         document.getElementById('pageCountBadge').textContent = this.pages.length + " Pages";
         this.updateReaderStage();
         this.stopAudio();
@@ -1005,7 +1037,7 @@ ${textBlock}
 
         if (!this.currentUser) return;
 
-        list.innerHTML = '<p style="color:var(--text-app-muted); font-size: 0.9rem;">Syncing with cloud...</p>';
+        list.innerHTML = '<p style="color:var(--text-app-muted); font-size: 0.9rem;">Loading your library from the cloud...</p>';
 
         this.unsubFirestore = db.collection("users").doc(this.currentUser.id).collection("books")
             .orderBy("createdAt", "desc")
