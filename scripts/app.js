@@ -192,7 +192,7 @@ const app = {
         const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'});
         const color = isError ? '#ff4444' : 'var(--text-app-muted)';
         log.innerHTML += `<div style="color: ${color}; margin-bottom: 2px;">[${time}] ${msg}</div>`;
-        log.scrollTop = log.scrollHeight;
+        setTimeout(() => { log.scrollTop = log.scrollHeight; }, 10);
     },
 
     async handleFileUpload(file) {
@@ -287,7 +287,18 @@ const app = {
 
         document.getElementById('activityLog').innerHTML = '';
         this.logActivity("Initializing AI parsing engine...");
-        this.showLoading("Transmitting to AI. Analyzing document structure...");
+        
+        const btn = document.getElementById('processBtn');
+        const btnText = document.getElementById('processBtnText');
+        const btnProgress = document.getElementById('processProgressBar');
+        
+        if (btn) {
+            btn.disabled = true;
+            btn.style.cursor = 'wait';
+            btnProgress.style.width = '5%';
+            btnText.innerHTML = `<i data-lucide="loader" class="spin"></i> Analyzing...`;
+            lucide.createIcons();
+        }
 
         try {
             // Dynamically import the stable Gemini SDK from ESM Run
@@ -374,7 +385,7 @@ const app = {
             } else if (useBinaryTransfer) {
                 textChunks = ["<BINARY_TRANSFER>"];
             } else {
-                this.hideLoading();
+                if(btn) { btn.disabled = false; btn.style.cursor = 'pointer'; btnProgress.style.width = '0%'; btnText.innerHTML = `<i data-lucide="sparkles"></i> Auto-Format & Parse`; lucide.createIcons(); }
                 return this.logActivity("No valid text or document provided.", true);
             }
             
@@ -471,7 +482,6 @@ ${textBlock}
                         document.getElementById('pageCountBadge').textContent = this.pages.length + " Pages";
                         
                         if (prevTotal < 5 && this.pages.length >= 5) {
-                            this.hideLoading();
                             this.currentPageIndex = 0;
                             this.updateReaderStage();
                         } else if (prevTotal === 0 && this.pages.length > 0 && this.pages.length < 5) {
@@ -479,16 +489,28 @@ ${textBlock}
                         }
                     }
                     const progress = Math.round(((chunkIdx + 1) / textChunks.length) * 100);
-                    document.getElementById('loadingText').textContent = `Processing block ${chunkIdx + 1} of ${textChunks.length} (${progress}%)...`;
-                    document.querySelector('.btn-magic').innerHTML = `<i data-lucide="loader"></i> Processing (${chunkIdx + 1}/${textChunks.length} — ${progress}%)`;
-                    lucide.createIcons();
+                    if(btn) {
+                        btnProgress.style.width = `${progress}%`;
+                        btnText.innerHTML = `<i data-lucide="loader" class="spin"></i> Processing ${progress}%`;
+                        lucide.createIcons();
+                    }
                 } catch(chunkErr) {
                     this.logActivity(`Unexpected error on chunk ${chunkIdx + 1}: ${chunkErr.message}`, true);
                 }
             }
             
-            document.querySelector('.btn-magic').innerHTML = `<i data-lucide="sparkles"></i> Auto-Format & Parse`;
-            lucide.createIcons();
+            if(btn) {
+                btnProgress.style.width = '100%';
+                btnText.innerHTML = `<i data-lucide="check"></i> Formatting Complete`;
+                lucide.createIcons();
+                setTimeout(() => {
+                    btn.disabled = false;
+                    btn.style.cursor = 'pointer';
+                    btnProgress.style.width = '0%';
+                    btnText.innerHTML = `<i data-lucide="sparkles"></i> Auto-Format & Parse`;
+                    lucide.createIcons();
+                }, 2000);
+            }
             
             this.logActivity(`All ${textChunks.length} blocks resolved. Book fully generated!`);
             if (this.pages.length === 0) throw new Error("Could not detect any valid <PAGE_BREAK> blocks in AI response.");
@@ -505,10 +527,18 @@ ${textBlock}
                 this.goToReader();
             }
             
-        } catch (err) {
-            console.error(err);
-            this.logActivity("Process terminated due to error: " + err.message, true);
-            alert("Parsing Failed: Make sure the document is valid text and API key is active. Error: " + err.message);
+        } catch (e) {
+            console.error("AI Error:", e);
+            this.hideLoading();
+            if(document.getElementById('processBtn')) {
+                document.getElementById('processBtn').disabled = false;
+                document.getElementById('processBtn').style.cursor = 'pointer';
+                document.getElementById('processProgressBar').style.width = '0%';
+                document.getElementById('processBtnText').innerHTML = `<i data-lucide="sparkles"></i> Auto-Format & Parse`;
+                lucide.createIcons();
+            }
+            this.logActivity(`FATAL ERROR: ${e.message}`, true);
+            alert("Processing failed. See Activity Log for details. Error: " + e.message);
         } finally {
             this.hideLoading();
         }

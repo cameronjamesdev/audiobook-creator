@@ -103,8 +103,9 @@
                 
                 <textarea id="rawTextInput" class="input-glass mt-1 mb-1" rows="4" placeholder="Or paste raw text here..."></textarea>
 
-                <button class="btn-magic" onclick="app.processWithGemini()">
-                    <i data-lucide="sparkles"></i> Auto-Format & Parse
+                <button id="processBtn" class="btn-magic" onclick="app.processWithGemini()" style="position: relative; overflow: hidden;">
+                    <div id="processProgressBar" style="position: absolute; left: 0; top: 0; bottom: 0; width: 0%; background: rgba(255,255,255,0.2); transition: width 0.3s ease;"></div>
+                    <span id="processBtnText" style="position: relative; display: flex; align-items: center; gap: 0.5rem;"><i data-lucide="sparkles"></i> Auto-Format & Parse</span>
                 </button>
                 
                 <div id="activityLog" style="margin-top: 15px; font-size: 0.75rem; font-family: monospace; color: var(--text-app-muted); max-height: 150px; overflow-y: auto; background: rgba(0,0,0,0.2); padding: 8px; border-radius: 5px; display: none;"></div>
