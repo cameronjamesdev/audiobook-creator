@@ -61,8 +61,8 @@
             <div class="brand-header" style="justify-content: space-between;">
                 <span style="display:flex;align-items:center;gap:0.8rem;"><i data-lucide="book-open"></i> Audiobook Creator</span>
                 <div style="display: flex; gap: 8px;">
-                    <button class="desktop-toggle-btn" onclick="app.toggleSidebar()" title="Collapse Sidebar">
-                        <i data-lucide="panel-left-close" style="width:16px;height:16px;"></i>
+                    <button class="desktop-toggle-btn" onclick="app.toggleSidebar()" title="Collapse Sidebar" style="font-size: 0.8rem; padding: 0.4rem 0.6rem; gap: 5px;">
+                        <i data-lucide="panel-left-close" style="width:16px;height:16px;"></i> Hide
                     </button>
                     <button class="btn-icon" onclick="app.logout()" title="Sign Out" style="padding: 6px; border-radius: 8px; color: var(--text-app-muted);">
                         <i data-lucide="log-out" style="width:16px;height:16px;"></i>
@@ -205,13 +205,12 @@
                 <i data-lucide="arrow-left"></i> Back to Options
             </button>
 
-            <!-- Desktop "Expand Sidebar" button -->
-            <button id="expandSidebarBtn" class="desktop-toggle-btn expand-sidebar-btn" onclick="app.toggleSidebar()" title="Show Sidebar" style="position: absolute; top: 15px; left: 15px; z-index: 50; display: none;">
-                <i data-lucide="panel-left-open" style="width:20px;height:20px;"></i>
-            </button>
-
             <div class="reader-toolbar" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
                 <div class="toolbar-stats" style="flex: 1; display: flex; align-items: center; gap: 15px;">
+                    <!-- Desktop "Expand Sidebar" button -->
+                    <button id="expandSidebarBtn" class="desktop-toggle-btn expand-sidebar-btn" onclick="app.toggleSidebar()" title="Show Settings Sidebar" style="display: none; font-size: 0.8rem; padding: 0.4rem 0.6rem; gap: 5px; white-space: nowrap;">
+                        <i data-lucide="panel-left-open" style="width:18px;height:18px;"></i> Show Settings
+                    </button>
                     <span id="pageCountBadge" class="badge">0 Pages</span>
                     <span id="activeThemeBadge" class="badge accent">Modern Theme</span>
 

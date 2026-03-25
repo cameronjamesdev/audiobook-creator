@@ -732,14 +732,24 @@ ${textBlock}
         if (!document.fullscreenElement && !document.webkitFullscreenElement && !document.msFullscreenElement) {
             const req = reader.requestFullscreen || reader.webkitRequestFullscreen || reader.msRequestFullscreen;
             if (req) {
-                req.call(reader).catch(err => {
+                req.call(reader).then(() => {
+                    if (window.screen && window.screen.orientation && window.screen.orientation.lock) {
+                        window.screen.orientation.lock('landscape').catch(e => console.log('Orientation lock not supported', e));
+                    }
+                }).catch(err => {
                     console.warn("Fullscreen failed, using fake fullscreen fallback", err);
                     reader.classList.add('fake-fullscreen');
+                    if (window.screen && window.screen.orientation && window.screen.orientation.lock) {
+                        window.screen.orientation.lock('landscape').catch(() => {});
+                    }
                 });
             }
         } else {
             const exit = document.exitFullscreen || document.webkitExitFullscreen || document.msExitFullscreen;
             if (exit) exit.call(document);
+            if (window.screen && window.screen.orientation && window.screen.orientation.unlock) {
+                window.screen.orientation.unlock();
+            }
         }
     },
 
