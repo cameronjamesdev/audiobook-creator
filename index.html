@@ -206,7 +206,7 @@
             </button>
 
             <div class="reader-toolbar" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
-                <div class="toolbar-stats" style="flex: 1; display: flex; align-items: center; gap: 15px;">
+                <div class="toolbar-stats" style="display: flex; align-items: center; gap: 15px;">
                     <!-- Desktop "Expand Sidebar" button -->
                     <button id="expandSidebarBtn" class="desktop-toggle-btn expand-sidebar-btn" onclick="app.toggleSidebar()" title="Show Settings Sidebar" style="display: none; font-size: 0.8rem; padding: 0.4rem 0.6rem; gap: 5px; white-space: nowrap;">
                         <i data-lucide="panel-left-open" style="width:18px;height:18px;"></i> Show Settings
@@ -230,7 +230,7 @@
                 
                 <div id="narratorSubtitle" class="status-msg" style="display: none; margin: 0; position: absolute; left: 50%; transform: translateX(-50%); top: 75px; z-index: 100; background: rgba(0,0,0,0.8); color: white; padding: 5px 15px; border-radius: 20px;"></div>
 
-                <div class="toolbar-actions" style="flex: 1; display: flex; justify-content: flex-end; gap: 10px; align-items: center;">
+                <div class="toolbar-actions" style="display: flex; justify-content: flex-end; gap: 10px; align-items: center;">
                     <button class="btn-icon" onclick="app.prevPage()" title="Previous Page"><i data-lucide="arrow-left"></i></button>
                     <span id="pageIndicator" style="font-size: 0.85rem; font-weight: 500; min-width: 40px; text-align: center;">0/0</span>
                     <button class="btn-icon" onclick="app.nextPage()" title="Next Page"><i data-lucide="arrow-right"></i></button>
