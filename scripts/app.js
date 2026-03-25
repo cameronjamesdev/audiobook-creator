@@ -152,7 +152,7 @@ const app = {
 
         // Show app, hide login
         document.getElementById('loginOverlay').style.display = 'none';
-        document.getElementById('app').style.display = 'flex';
+        document.getElementById('app').style.display = '';
 
         this.setupEventListeners();
         lucide.createIcons();
