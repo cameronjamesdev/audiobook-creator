@@ -897,11 +897,14 @@ ${textBlock}
                         const pageContent = activeNode.closest('.page-content');
                         if (pageContent) {
                             const progress = this.audio.currentTime / this.audio.duration;
-                            if (activeNode.offsetHeight > pageContent.clientHeight * 0.6) {
+                            if (activeNode.offsetHeight > pageContent.clientHeight * 0.7) {
                                 const nodeTop = activeNode.offsetTop - pageContent.offsetTop;
-                                const scrollTarget = nodeTop + (activeNode.offsetHeight * progress) - (pageContent.clientHeight / 2);
-                                // Directly assign for smooth tracking, CSS handles scroll behavior automatically if needed
-                                pageContent.scrollTop = Math.max(0, scrollTarget);
+                                const expectedIdealScroll = nodeTop + (activeNode.offsetHeight * progress) - (pageContent.clientHeight * 0.4);
+                                
+                                // Only trigger a smooth scroll if the voice drifts 150px past or before the current scroll view
+                                if (Math.abs(pageContent.scrollTop - expectedIdealScroll) > 150) {
+                                    pageContent.scrollTo({ top: expectedIdealScroll, behavior: 'smooth' });
+                                }
                             }
                         }
                     };

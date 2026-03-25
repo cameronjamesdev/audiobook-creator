@@ -248,7 +248,7 @@ button { font-family: 'Inter', sans-serif; cursor: pointer; border-radius: 8px; 
 }
 
 .toolbar-center {
-    display: flex; align-items: center; justify-content: center; flex: 1; min-width: 320px;
+    display: flex; align-items: center; justify-content: center; flex: 1; min-width: 400px;
 }
 
 .toolbar-right {
