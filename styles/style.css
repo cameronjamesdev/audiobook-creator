@@ -239,14 +239,14 @@ button { font-family: 'Inter', sans-serif; cursor: pointer; border-radius: 8px; 
 }
 
 .reader-toolbar {
-    height: 70px; display: flex; justify-content: space-between; align-items: center;
-    padding: 0 2rem; border-bottom: 1px solid var(--border-glass); background: rgba(0,0,0,0.02);
+    min-height: 70px; height: auto; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;
+    padding: 10px 2rem; border-bottom: 1px solid var(--border-glass); background: rgba(0,0,0,0.02);
 }
-.toolbar-stats { display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; }
+.toolbar-stats { display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; flex: auto; }
 .badge { padding: 0.5rem 1rem; border-radius: 20px; font-size: 0.85rem; background: rgba(125,125,125,0.1); color: var(--text-app-muted); font-weight: 600;}
 .badge.accent { color: var(--accent-app); background: var(--accent-glow); }
 
-.toolbar-actions { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+.toolbar-actions { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; flex: auto; }
 .toolbar-divider { width: 1px; height: 24px; background: var(--border-glass); margin: 0 1rem; }
 
 .reader-container {
@@ -669,11 +669,16 @@ button { font-family: 'Inter', sans-serif; cursor: pointer; border-radius: 8px; 
     }
     
     .reader-toolbar {
-        padding: 0 1rem;
-        gap: 10px;
-        flex-wrap: wrap;
+        padding: 15px 10px;
+        gap: 15px;
+        flex-direction: column;
+        justify-content: center;
         height: auto;
         min-height: 70px;
+    }
+    .toolbar-stats, .toolbar-actions {
+        justify-content: center;
+        width: 100%;
     }
 }
 
