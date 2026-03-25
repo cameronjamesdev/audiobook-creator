@@ -143,10 +143,11 @@ body {
    Desktop Split-Pane Layout
    ========================================= */
 .app-container {
-    display: grid;
-    grid-template-columns: 450px 1fr;
+    display: flex;
     height: 100vh;
     width: 100vw;
+    overflow: hidden;
+    transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 
 /* Left Panel (Configuration & Upload) */
@@ -158,6 +159,13 @@ body {
     flex-direction: column;
     overflow-y: auto;
     padding: 2rem;
+    width: 450px;
+    flex-shrink: 0;
+    transition: margin-left 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.app-container.sidebar-collapsed .panel-sidebar {
+    margin-left: -450px;
 }
 
 .brand-header {
@@ -224,6 +232,10 @@ button { font-family: 'Inter', sans-serif; cursor: pointer; border-radius: 8px; 
     display: flex;
     flex-direction: column;
     height: 100vh;
+    flex: 1;
+    min-width: 0;
+    position: relative;
+    transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 
 .reader-toolbar {
@@ -608,3 +620,136 @@ button { font-family: 'Inter', sans-serif; cursor: pointer; border-radius: 8px; 
     animation: fadeInLogin 0.2s ease;
 }
 
+/* =========================================
+   Responsive Design (Tablet & Mobile)
+   ========================================= */
+
+/* Desktop / Tablet Landscape Navigation visibility rules */
+@media (min-width: 801px) {
+    .mobile-nav-btn {
+        display: none !important;
+    }
+}
+
+/* Tablet Portrait & Mobile Landscape / Portrait */
+@media (max-width: 800px) {
+    .app-container {
+        width: 200vw;
+        /* Flex children act as 50% of the 200vw width */
+    }
+    
+    .app-container.viewing-reader {
+        transform: translateX(-100vw);
+    }
+    
+    .panel-sidebar {
+        width: 100vw !important;
+        margin-left: 0 !important;
+        padding: 1.5rem;
+    }
+    
+    .panel-reader {
+        width: 100vw !important;
+        flex: none;
+    }
+    
+    /* Hide desktop collapse buttons */
+    .desktop-toggle-btn {
+        display: none !important;
+    }
+    
+    .page-block {
+        padding: 5% 5%;
+        max-width: 100%;
+    }
+
+    .login-card {
+        padding: 2rem;
+        max-width: 90%;
+    }
+    
+    .reader-toolbar {
+        padding: 0 1rem;
+        gap: 10px;
+        flex-wrap: wrap;
+        height: auto;
+        min-height: 70px;
+    }
+}
+
+/* Mobile Navigation Buttons */
+.mobile-nav-btn {
+    background: linear-gradient(135deg, #a855f7, var(--accent-app));
+    color: #fff;
+    border: none;
+    padding: 1rem;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 600;
+    box-shadow: 0 4px 15px rgba(168, 85, 247, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+    width: 100%;
+    transition: all 0.2s ease;
+}
+
+.mobile-nav-btn.floating-top {
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: auto;
+    z-index: 50;
+    margin: 0;
+    padding: 0.5rem 1rem;
+    border-radius: 50px;
+    font-size: 0.85rem;
+}
+
+.mobile-nav-btn:hover {
+    transform: translateY(-2px) translateX(-50%);
+    filter: brightness(1.1);
+}
+
+.mobile-nav-btn-sidebar {
+    position: sticky;
+    bottom: 0;
+    margin-top: 2rem;
+    margin-bottom: 0;
+    border-radius: 12px 12px 0 0;
+    background: linear-gradient(135deg, var(--accent-app), #a855f7);
+    z-index: 10;
+}
+
+/* Desktop Collapse Button */
+.desktop-toggle-btn {
+    background: var(--bg-panel);
+    border: 1px solid var(--border-glass);
+    color: var(--text-app);
+    padding: 0.4rem;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+.desktop-toggle-btn:hover {
+    background: rgba(125,125,125,0.1);
+    color: var(--accent-app);
+}
+
+.panel-reader.fake-fullscreen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw !important;
+    height: 100vh !important;
+    z-index: 99999;
+    background: var(--bg-app);
+}

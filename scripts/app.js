@@ -495,6 +495,11 @@ ${textBlock}
             }
             document.getElementById('pageCountBadge').textContent = this.pages.length + " Pages";
             
+            // On mobile, auto-slide to the reader view once the book is generated
+            if (window.innerWidth <= 800) {
+                this.goToReader();
+            }
+            
         } catch (err) {
             console.error(err);
             this.logActivity("Process terminated due to error: " + err.message, true);
@@ -717,12 +722,44 @@ ${textBlock}
 
     toggleFullscreen() {
         const reader = document.querySelector('.panel-reader');
-        if (!document.fullscreenElement) {
-            reader.requestFullscreen().catch(err => {
-                alert(`Error attempting to enable fullscreen mode: ${err.message}`);
-            });
+        
+        // Native fallback check for iOS devices that reject fullscreen on non-video elements
+        if (!document.fullscreenEnabled && !reader.webkitRequestFullscreen) {
+            reader.classList.toggle('fake-fullscreen');
+            return;
+        }
+
+        if (!document.fullscreenElement && !document.webkitFullscreenElement && !document.msFullscreenElement) {
+            const req = reader.requestFullscreen || reader.webkitRequestFullscreen || reader.msRequestFullscreen;
+            if (req) {
+                req.call(reader).catch(err => {
+                    console.warn("Fullscreen failed, using fake fullscreen fallback", err);
+                    reader.classList.add('fake-fullscreen');
+                });
+            }
         } else {
-            document.exitFullscreen();
+            const exit = document.exitFullscreen || document.webkitExitFullscreen || document.msExitFullscreen;
+            if (exit) exit.call(document);
+        }
+    },
+
+    goToReader() {
+        document.querySelector('.app-container').classList.add('viewing-reader');
+    },
+
+    goToSidebar() {
+        document.querySelector('.app-container').classList.remove('viewing-reader');
+    },
+
+    toggleSidebar() {
+        const container = document.querySelector('.app-container');
+        const btn = document.getElementById('expandSidebarBtn');
+        container.classList.toggle('sidebar-collapsed');
+        
+        if (container.classList.contains('sidebar-collapsed')) {
+            if (btn) btn.style.display = 'flex';
+        } else {
+            if (btn) btn.style.display = 'none';
         }
     },
 

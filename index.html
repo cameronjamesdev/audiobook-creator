@@ -60,9 +60,14 @@
         <aside class="panel-sidebar">
             <div class="brand-header" style="justify-content: space-between;">
                 <span style="display:flex;align-items:center;gap:0.8rem;"><i data-lucide="book-open"></i> Audiobook Creator</span>
-                <button class="btn-icon" onclick="app.logout()" title="Sign Out" style="padding: 6px; border-radius: 8px; color: var(--text-app-muted);">
-                    <i data-lucide="log-out" style="width:16px;height:16px;"></i>
-                </button>
+                <div style="display: flex; gap: 8px;">
+                    <button class="desktop-toggle-btn" onclick="app.toggleSidebar()" title="Collapse Sidebar">
+                        <i data-lucide="panel-left-close" style="width:16px;height:16px;"></i>
+                    </button>
+                    <button class="btn-icon" onclick="app.logout()" title="Sign Out" style="padding: 6px; border-radius: 8px; color: var(--text-app-muted);">
+                        <i data-lucide="log-out" style="width:16px;height:16px;"></i>
+                    </button>
+                </div>
             </div>
             <!-- User Profile Bar -->
             <div id="userProfileBar" style="background: rgba(125,125,125,0.07); border: 1px solid var(--border-glass); border-radius: 10px; padding: 10px 14px; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 10px;">
@@ -186,11 +191,25 @@
                     </button>
                 </div>
             </div>
+            
+            <button class="mobile-nav-btn mobile-nav-btn-sidebar" onclick="app.goToReader()">
+                Review Audiobook <i data-lucide="arrow-right"></i>
+            </button>
 
         </aside>
 
         <!-- Right Reader Stage -->
         <main class="panel-reader">
+            <!-- Mobile "Back" button -->
+            <button class="mobile-nav-btn floating-top" onclick="app.goToSidebar()">
+                <i data-lucide="arrow-left"></i> Back to Options
+            </button>
+
+            <!-- Desktop "Expand Sidebar" button -->
+            <button id="expandSidebarBtn" class="desktop-toggle-btn expand-sidebar-btn" onclick="app.toggleSidebar()" title="Show Sidebar" style="position: absolute; top: 15px; left: 15px; z-index: 50; display: none;">
+                <i data-lucide="panel-left-open" style="width:20px;height:20px;"></i>
+            </button>
+
             <div class="reader-toolbar" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
                 <div class="toolbar-stats" style="flex: 1; display: flex; align-items: center; gap: 15px;">
                     <span id="pageCountBadge" class="badge">0 Pages</span>
