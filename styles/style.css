@@ -239,14 +239,32 @@ button { font-family: 'Inter', sans-serif; cursor: pointer; border-radius: 8px; 
 }
 
 .reader-toolbar {
-    min-height: 70px; height: auto; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;
+    min-height: 70px; height: auto; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;
     padding: 10px 2rem; border-bottom: 1px solid var(--border-glass); background: rgba(0,0,0,0.02);
 }
-.toolbar-stats { display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; flex: auto; }
+
+.toolbar-left {
+    display: flex; gap: 1rem; align-items: center; flex: 1; justify-content: flex-start; min-width: max-content;
+}
+
+.toolbar-center {
+    display: flex; align-items: center; justify-content: center; flex: 1; min-width: 320px;
+}
+
+.toolbar-right {
+    display: flex; align-items: center; justify-content: flex-end; gap: 0.5rem; flex: 1; min-width: max-content;
+}
+
+@media (max-width: 1250px) {
+    .toolbar-center {
+        order: 3;
+        flex: 100%;
+        margin-top: 5px;
+    }
+}
+
 .badge { padding: 0.5rem 1rem; border-radius: 20px; font-size: 0.85rem; background: rgba(125,125,125,0.1); color: var(--text-app-muted); font-weight: 600;}
 .badge.accent { color: var(--accent-app); background: var(--accent-glow); }
-
-.toolbar-actions { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; flex: auto; }
 .toolbar-divider { width: 1px; height: 24px; background: var(--border-glass); margin: 0 1rem; }
 
 .reader-container {
@@ -676,10 +694,14 @@ button { font-family: 'Inter', sans-serif; cursor: pointer; border-radius: 8px; 
         height: auto;
         min-height: 70px;
     }
-    .toolbar-stats, .toolbar-actions {
+    .toolbar-left, .toolbar-center, .toolbar-right {
         justify-content: center;
         width: 100%;
+        flex: none;
+        order: unset;
+        flex-wrap: wrap;
     }
+    .toolbar-right { justify-content: center; margin-top: 5px; }
 }
 
 /* Mobile Navigation Buttons */
