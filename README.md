@@ -52,3 +52,16 @@ If you want to invite a new friend to use the app:
 
 ### Backups
 Even though everything is safely in the Google cloud, you can always click **"Export"** in the sidebar to download your entire library as a `.json` file backup to your hard drive.
+
+---
+
+### 🚀 Future Optimization Tools (MCP Requests)
+Cameron has requested that future AI sessions look into adding and integrating these MCP (Model Context Protocol) servers to improve workflow:
+- ➕ GitHub MCP
+- ➕ Perplexity MCP
+- ➕ Sequential Thinking MCP
+
+### MCP Servers
+    ➕ GitHub MCP
+    ➕ Perplexity MCP
+    ➕ Sequential Thinking

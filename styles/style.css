@@ -130,7 +130,7 @@ body {
     background: var(--bg-app);
     color: var(--text-app);
     overflow: hidden;
-    height: 100vh;
+    height: 100dvh;
     transition: all 0.4s ease;
 }
 
@@ -144,7 +144,7 @@ body {
    ========================================= */
 .app-container {
     display: flex;
-    height: 100vh;
+    height: 100dvh;
     width: 100vw;
     overflow: hidden;
     transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
@@ -231,7 +231,7 @@ button { font-family: 'Inter', sans-serif; cursor: pointer; border-radius: 8px; 
     background: var(--bg-app);
     display: flex;
     flex-direction: column;
-    height: 100vh;
+    height: 100dvh;
     flex: 1;
     min-width: 0;
     position: relative;
@@ -260,6 +260,17 @@ button { font-family: 'Inter', sans-serif; cursor: pointer; border-radius: 8px; 
         order: 3;
         flex: 100%;
         margin-top: 5px;
+    }
+    .toolbar-left, .toolbar-right {
+        min-width: 0;
+        flex-wrap: wrap;
+    }
+}
+
+@media (max-width: 1000px) {
+    .toolbar-left, .toolbar-right {
+        flex: 100%;
+        justify-content: center;
     }
 }
 

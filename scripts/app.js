@@ -762,9 +762,11 @@ ${textBlock}
 
     toggleFullscreen() {
         const reader = document.querySelector('.panel-reader');
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
         
         // Native fallback check for iOS devices that reject fullscreen on non-video elements
-        if (!document.fullscreenEnabled && !reader.webkitRequestFullscreen) {
+        // Also force fake fullscreen on all iOS/iPad to prevent Apple's native swipe gestures from closing the app
+        if (isIOS || (!document.fullscreenEnabled && !reader.webkitRequestFullscreen)) {
             reader.classList.toggle('fake-fullscreen');
             return;
         }
