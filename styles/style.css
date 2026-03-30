@@ -130,6 +130,7 @@ body {
     background: var(--bg-app);
     color: var(--text-app);
     overflow: hidden;
+    overscroll-behavior: none;
     height: 100dvh;
     transition: all 0.4s ease;
 }
@@ -158,6 +159,8 @@ body {
     display: flex;
     flex-direction: column;
     overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: contain;
     padding: 2rem;
     width: 450px;
     flex-shrink: 0;
@@ -235,6 +238,7 @@ button { font-family: 'Inter', sans-serif; cursor: pointer; border-radius: 8px; 
     flex: 1;
     min-width: 0;
     position: relative;
+    container-type: inline-size;
     transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 
@@ -255,7 +259,7 @@ button { font-family: 'Inter', sans-serif; cursor: pointer; border-radius: 8px; 
     display: flex; align-items: center; justify-content: flex-end; gap: 0.5rem; flex: 1; min-width: max-content;
 }
 
-@media (max-width: 1250px) {
+@container (max-width: 850px) {
     .toolbar-center {
         order: 3;
         flex: 100%;
@@ -267,7 +271,7 @@ button { font-family: 'Inter', sans-serif; cursor: pointer; border-radius: 8px; 
     }
 }
 
-@media (max-width: 1000px) {
+@container (max-width: 500px) {
     .toolbar-left, .toolbar-right {
         flex: 100%;
         justify-content: center;

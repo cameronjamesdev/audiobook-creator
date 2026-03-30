@@ -817,6 +817,16 @@ ${textBlock}
 
     async speakCurrentPage() {
         this.currentPlaybackId++;
+        
+        // [iOS Safari Hack] Automatically unlock the Web Audio media element by executing a blank synchronous play
+        // immediately inside the click event cycle before any async fetch actions disrupt the 'user gesture' tracking context.
+        if (!this.audio.src || this.audio.src.includes(location.host)) {
+            // A perfectly silent 0.1s valid MP3 base64 string
+            this.audio.src = 'data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU2LjM2LjEwMAAAAAAAAAAAAAAA//OEAAAAAAAAAAAAAAAAAAAAAAAASW5mbwAAAA8AAAAEAAABIADAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwM';
+            this.audio.play().catch(() => {});
+            this.audio.pause();
+        }
+
         const apiKey = document.getElementById('openAiKey').value;
         const voice = document.getElementById('voiceChoice').value || 'fable';
         const sub = document.getElementById('narratorSubtitle');
