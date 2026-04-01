@@ -60,8 +60,3 @@ Cameron has requested that future AI sessions look into adding and integrating t
 - ➕ GitHub MCP
 - ➕ Perplexity MCP
 - ➕ Sequential Thinking MCP
-
-### MCP Servers
-    ➕ GitHub MCP
-    ➕ Perplexity MCP
-    ➕ Sequential Thinking
