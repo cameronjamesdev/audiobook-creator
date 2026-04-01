@@ -1,0 +1,5 @@
+﻿8eaca03 Fix iOS Web Audio TTS unlock bug, iPad fullscreen CSS container-query toolbar wrap, and Safari bouncing overscroll
+a505e1d Fix iOS viewport scaling, flex-wrap smooshing, native fullscreen swipe exit, and 100dvh bounding box
+1ea1121 Enhance processing UX with inline button progress bar and console auto-scroll fix
+9d38fd7 Smooth stepped scrolling, CSS cache busters, and toolbar minimum width enforcement
+9229ec2 Refactor reader toolbar into 3-zone responsive layout to prevent widget squashing on tablets

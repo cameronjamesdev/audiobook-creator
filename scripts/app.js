@@ -278,9 +278,63 @@ const app = {
         return results;
     },
 
-    async processWithGemini() {
-        const apiKey = document.getElementById('geminiKey').value;
-        if (!apiKey) return alert("Gemini API Key is missing.");
+    async callOpenAIWithRetry(apiKey, buildPromptFn, text, depth = 0) {
+        const MAX_DEPTH = 2; // Will try: full → halves → quarters
+        const results = [];
+
+        // Attempt the API call up to 3 times
+        let responseText = null;
+        for (let attempt = 1; attempt <= 3; attempt++) {
+            try {
+                const prompt = buildPromptFn(text);
+                const req = await fetch('https://api.openai.com/v1/chat/completions', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+                    body: JSON.stringify({
+                        model: "gpt-4o-mini",
+                        messages: [{ role: "user", content: prompt }],
+                        temperature: 0.1
+                    })
+                });
+                
+                if (!req.ok) {
+                    const errorData = await req.json();
+                    throw new Error(errorData.error?.message || `HTTP ${req.status}`);
+                }
+                
+                const data = await req.json();
+                responseText = data.choices[0].message.content || '';
+                break;
+            } catch (err) {
+                this.logActivity(`OpenAI attempt ${attempt}/3 failed${depth > 0 ? ' (sub-chunk)' : ''}: ${err.message}. ${attempt < 3 ? `Retrying in ${attempt * 3}s...` : ''}`, true);
+                if (attempt < 3) await new Promise(r => setTimeout(r, attempt * 3000));
+            }
+        }
+
+        if (responseText !== null) {
+            results.push(...this.parseAIResponse(responseText));
+        } else if (depth < MAX_DEPTH) {
+            this.logActivity(`Splitting failed chunk into halves and retrying (depth ${depth + 1})...`, true);
+            const mid = text.lastIndexOf('\n\n', Math.floor(text.length / 2));
+            const splitPoint = mid > 200 ? mid : Math.floor(text.length / 2);
+            const firstHalf = text.slice(0, splitPoint);
+            const secondHalf = text.slice(splitPoint);
+            if (firstHalf.trim()) results.push(...await this.callOpenAIWithRetry(apiKey, buildPromptFn, firstHalf, depth + 1));
+            if (secondHalf.trim()) results.push(...await this.callOpenAIWithRetry(apiKey, buildPromptFn, secondHalf, depth + 1));
+        } else {
+            this.logActivity(`⚠️ Sub-chunk failed after maximum retries.`, true);
+        }
+
+        return results;
+    },
+
+    async processDocument() {
+        const engine = document.getElementById('engineChoice') ? document.getElementById('engineChoice').value : 'gemini';
+        const geminiKey = document.getElementById('geminiKey').value;
+        const openAiKey = document.getElementById('openAiKey').value;
+        
+        if (engine === 'gemini' && !geminiKey) return alert("Gemini API Key is missing.");
+        if (engine === 'openai' && (!openAiKey || openAiKey.includes('...'))) return alert("OpenAI API Key is missing.");
         
         const rawText = document.getElementById('rawTextInput').value.trim();
         if (!this.currentFileBase64 && !rawText) return alert("Please drop a document or paste raw text first.");
@@ -301,10 +355,13 @@ const app = {
         }
 
         try {
-            // Dynamically import the stable Gemini SDK from ESM Run
-            const { GoogleGenerativeAI } = await import('https://esm.run/@google/generative-ai');
-            const genAI = new GoogleGenerativeAI(apiKey);
-            const model = genAI.getGenerativeModel({ model: "gemini-2.5-pro" });
+            let model = null;
+            if (engine === 'gemini') {
+                // Dynamically import the stable Gemini SDK from ESM Run
+                const { GoogleGenerativeAI } = await import('https://esm.run/@google/generative-ai');
+                const genAI = new GoogleGenerativeAI(geminiKey);
+                model = genAI.getGenerativeModel({ model: "gemini-2.5-pro" });
+            }
             
             const userDensity = document.getElementById('densityChoice').value || 'moderate';
             const prompt = `
@@ -383,6 +440,10 @@ const app = {
                     i = end;
                 }
             } else if (useBinaryTransfer) {
+                if (engine === 'openai') {
+                    if(btn) { btn.disabled = false; btn.style.cursor = 'pointer'; btnProgress.style.width = '0%'; btnText.innerHTML = `<i data-lucide="sparkles"></i> Auto-Format & Parse`; lucide.createIcons(); }
+                    return alert("OpenAI engine cannot process binary files directly. Please select Gemini 2.5 Pro instead or paste raw text.");
+                }
                 textChunks = ["<BINARY_TRANSFER>"];
             } else {
                 if(btn) { btn.disabled = false; btn.style.cursor = 'pointer'; btnProgress.style.width = '0%'; btnText.innerHTML = `<i data-lucide="sparkles"></i> Auto-Format & Parse`; lucide.createIcons(); }
@@ -474,7 +535,13 @@ ${textBlock}
 
                 // Use the recursive split-and-retry helper — guarantees near-zero content loss
                 try {
-                    const parsedBatch = await this.callGeminiWithRetry(model, buildPromptFn, textChunks[chunkIdx]);
+                    let parsedBatch = [];
+                    if (engine === 'openai') {
+                        parsedBatch = await this.callOpenAIWithRetry(openAiKey, buildPromptFn, textChunks[chunkIdx]);
+                    } else {
+                        parsedBatch = await this.callGeminiWithRetry(model, buildPromptFn, textChunks[chunkIdx]);
+                    }
+                    
                     if (parsedBatch.length > 0) {
                         const prevTotal = this.pages.length;
                         this.pages.push(...parsedBatch);
