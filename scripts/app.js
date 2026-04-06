@@ -1130,19 +1130,32 @@ ${textBlock}
         const title = prompt("Enter a title for this Audiobook in your library:", "My Saved Book");
         if (!title) return;
         
+        let existingPlaylists = new Set(this.cloudLibraryCache.map(b => b.playlist).filter(p => p));
+        let pListArray = Array.from(existingPlaylists);
+        let playlistStr = "";
+        if (pListArray.length > 0) {
+            playlistStr = prompt(`Enter a Playlist tag (or leave blank). Existing tags: ${pListArray.join(', ')}`, "");
+        } else {
+            playlistStr = prompt("Enter a Playlist tag to organize your library (or leave blank)", "");
+        }
+        
         const id = this.currentBookId || 'book_' + Date.now();
         this.currentBookId = id;
         
+        const orderIndex = this.cloudLibraryCache.length ? Math.min(...this.cloudLibraryCache.map(b => b.order || 0)) - 1 : 0;
+        
         const bookData = {
             title,
+            playlist: playlistStr ? playlistStr.trim() : "",
+            order: orderIndex,
             date: new Date().toLocaleDateString(),
             pages: this.pages,
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            createdAt: window.firebase.firestore.FieldValue.serverTimestamp()
         };
         
         try {
             await db.collection("users").doc(this.currentUser.id).collection("books").doc(id).set(bookData, { merge: true });
-            alert("Saved to " + this.currentUser.name + "'s Cloud Library successfully!");
+            alert("Saved to " + this.currentUser.name + "'s Library successfully!");
         } catch (e) {
             console.error("Save error:", e);
             alert("Failed to save audiobook to cloud.");
@@ -1175,6 +1188,23 @@ ${textBlock}
         }
     },
     
+    async editLibraryItem(id) {
+        let book = this.cloudLibraryCache.find(b => b.id === id);
+        if (!book) return;
+        const newTitle = prompt("Edit Title:", book.title);
+        if (!newTitle) return;
+        const newPlaylist = prompt("Edit Playlist tag (leave blank for none):", book.playlist || "");
+        
+        try {
+            await db.collection("users").doc(this.currentUser.id).collection("books").doc(id).update({
+                title: newTitle,
+                playlist: newPlaylist ? newPlaylist.trim() : ""
+            });
+        } catch (e) {
+            console.error("Edit error:", e);
+        }
+    },
+    
     setupFirestoreListener() {
         if (this.unsubFirestore) {
             this.unsubFirestore();
@@ -1189,7 +1219,6 @@ ${textBlock}
         list.innerHTML = '<p style="color:var(--text-app-muted); font-size: 0.9rem;">Loading your library from the cloud...</p>';
 
         this.unsubFirestore = db.collection("users").doc(this.currentUser.id).collection("books")
-            .orderBy("createdAt", "desc")
             .onSnapshot(snapshot => {
                 const library = [];
                 snapshot.forEach(doc => {
@@ -1197,28 +1226,100 @@ ${textBlock}
                 });
                 
                 this.cloudLibraryCache = library;
-                
-                if (library.length === 0) {
-                    list.innerHTML = '<p style="color:var(--text-app-muted); font-size: 0.9rem;">Your cloud library is empty.</p>';
-                } else {
-                    list.innerHTML = library.map(b => `
-                        <div style="background: rgba(255,255,255,0.05); border: 1px solid var(--border-glass); padding: 10px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
-                            <div style="overflow: hidden; flex: 1; padding-right: 10px;">
-                                <strong style="display: block; font-size: 0.9rem; text-overflow: ellipsis; white-space: nowrap; overflow: hidden;">${b.title}</strong>
-                                <span style="font-size: 0.75rem; color: var(--text-app-muted);">${b.pages ? b.pages.length : 0} Pages • ${b.date}</span>
-                            </div>
-                            <div style="display: flex; gap: 5px;">
-                                <button class="btn-primary" onclick="app.loadFromLibrary('${b.id}')" style="padding: 4px 8px; font-size: 0.75rem;"><i data-lucide="play" style="width:12px;height:12px;"></i></button>
-                                <button class="btn-icon" onclick="app.deleteFromLibrary('${b.id}')" style="padding: 4px; color: #ff5e5e;"><i data-lucide="trash-2" style="width:12px;height:12px;"></i></button>
-                            </div>
-                        </div>
-                    `).join('');
-                }
-                lucide.createIcons();
+                this.updatePlaylistDropdown();
+                this.renderLibrary();
             }, err => {
                 console.error("Firestore sync error:", err);
                 list.innerHTML = '<p style="color:#ef4444; font-size: 0.9rem;">Failed to sync cloud library.</p>';
             });
+    },
+    
+    updatePlaylistDropdown() {
+        const dd = document.getElementById('libraryPlaylist');
+        if (!dd) return;
+        const currentSelection = dd.value;
+        const playlists = new Set(this.cloudLibraryCache.map(b => b.playlist).filter(p => p));
+        let html = '<option value="all">Playlist: All</option>';
+        playlists.forEach(p => { html += `<option value="${p}">${p}</option>`; });
+        html += '<option value="none">Uncategorized</option>';
+        dd.innerHTML = html;
+        if (dd.querySelector(`option[value="${currentSelection}"]`)) {
+            dd.value = currentSelection;
+        }
+    },
+    
+    renderLibrary() {
+        const list = document.getElementById('libraryList');
+        if (!list) return;
+        
+        if (this.cloudLibraryCache.length === 0) {
+            list.innerHTML = '<p style="color:var(--text-app-muted); font-size: 0.9rem;">Your cloud library is empty.</p>';
+            return;
+        }
+        
+        const sortMode = document.getElementById('librarySort').value;
+        const playlistFilter = document.getElementById('libraryPlaylist').value;
+        
+        let filtered = [...this.cloudLibraryCache];
+        if (playlistFilter === 'none') {
+            filtered = filtered.filter(b => !b.playlist);
+        } else if (playlistFilter !== 'all') {
+            filtered = filtered.filter(b => b.playlist === playlistFilter);
+        }
+        
+        const sortableEnabled = (sortMode === 'custom' && playlistFilter === 'all');
+        
+        if (sortMode === 'recent') {
+            filtered.sort((a, b) => ((b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0)));
+        } else if (sortMode === 'az') {
+            filtered.sort((a, b) => a.title.localeCompare(b.title));
+        } else if (sortMode === 'za') {
+            filtered.sort((a, b) => b.title.localeCompare(a.title));
+        } else {
+            // custom drag order
+            filtered.sort((a, b) => (a.order || 0) - (b.order || 0));
+        }
+        
+        list.innerHTML = filtered.map(b => `
+            <div data-id="${b.id}" class="library-item" style="background: rgba(255,255,255,0.05); border: 1px solid var(--border-glass); padding: 10px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; cursor: ${sortableEnabled ? 'grab' : 'default'};">
+                ${sortableEnabled ? '<i data-lucide="grip-vertical" style="color: var(--text-app-muted); margin-right: 5px; width: 14px; height:14px; cursor: grab;"></i>' : ''}
+                <div style="overflow: hidden; flex: 1; padding-right: 5px;">
+                    <strong style="display: block; font-size: 0.9rem; text-overflow: ellipsis; white-space: nowrap; overflow: hidden;" title="${b.title}">${b.title}</strong>
+                    <span style="font-size: 0.75rem; color: var(--text-app-muted);">
+                        ${b.pages ? b.pages.length : 0} Pages • ${b.playlist ? `<span style="color: var(--accent-app);">🏷️ ${b.playlist}</span> • ` : ''}${b.date}
+                    </span>
+                </div>
+                <div style="display: flex; gap: 4px;">
+                    <button class="btn-primary" onclick="app.loadFromLibrary('${b.id}')" style="padding: 4px; font-size: 0.75rem; border-radius: 4px;" title="Play"><i data-lucide="play" style="width:14px;height:14px;"></i></button>
+                    <button class="btn-secondary" onclick="app.editLibraryItem('${b.id}')" style="padding: 4px; border-radius: 4px; border: 1px solid var(--border-glass);" title="Edit Tags"><i data-lucide="edit-2" style="width:14px;height:14px;"></i></button>
+                    <button class="btn-icon" onclick="app.deleteFromLibrary('${b.id}')" style="padding: 4px; color: #ff5e5e;" title="Delete"><i data-lucide="trash-2" style="width:14px;height:14px;"></i></button>
+                </div>
+            </div>
+        `).join('');
+        lucide.createIcons();
+        
+        if (this.sortableInstance) this.sortableInstance.destroy();
+        
+        if (sortableEnabled && window.Sortable) {
+            this.sortableInstance = Sortable.create(list, {
+                animation: 150,
+                handle: '.library-item',
+                ghostClass: 'sortable-ghost',
+                onEnd: async (evt) => {
+                    const idOrderMap = {};
+                    Array.from(list.children).forEach((child, index) => {
+                        const dbId = child.getAttribute('data-id');
+                        if (dbId) idOrderMap[dbId] = index;
+                    });
+                    
+                    const batch = db.batch();
+                    Object.keys(idOrderMap).forEach(key => {
+                        batch.update(db.collection("users").doc(this.currentUser.id).collection("books").doc(key), { order: idOrderMap[key] });
+                    });
+                    try { await batch.commit(); } catch(e) { console.error("Batch sort save error", e); }
+                }
+            });
+        }
     },
 
     downloadWord() {

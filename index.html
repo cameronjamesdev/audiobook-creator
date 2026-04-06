@@ -13,6 +13,7 @@
     <link rel="stylesheet" href="styles/style.css?v=2.3">
     
     <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     
@@ -178,8 +179,21 @@
             <!-- My Library Section -->
             <div class="config-section" style="margin-bottom: 20px;">
                 <h3>My Saved Audiobooks</h3>
-                <p style="font-size:0.85rem; color:var(--text-app-muted); margin-bottom: 15px;">Your documents are securely saved to your local browser storage here.</p>
-                <div id="libraryList" style="display: flex; flex-direction: column; gap: 10px;">
+                <p style="font-size:0.85rem; color:var(--text-app-muted); margin-bottom: 10px;">Your documents are securely saved to your personal cloud library.</p>
+                
+                <div style="display: flex; gap: 8px; margin-bottom: 15px;">
+                    <select id="librarySort" class="input-glass" style="flex: 1; padding: 0.4rem; font-size: 0.8rem;" onchange="app.renderLibrary()">
+                        <option value="custom">Sort: Custom Drag</option>
+                        <option value="recent" selected>Sort: Recent</option>
+                        <option value="az">Sort: A - Z</option>
+                        <option value="za">Sort: Z - A</option>
+                    </select>
+                    <select id="libraryPlaylist" class="input-glass" style="flex: 1; padding: 0.4rem; font-size: 0.8rem;" onchange="app.renderLibrary()">
+                        <option value="all">Playlist: All</option>
+                    </select>
+                </div>
+
+                <div id="libraryList" style="display: flex; flex-direction: column; gap: 10px; min-height: 50px;">
                     <p style="color:var(--text-app-muted); font-size: 0.9rem;">Your library is empty.</p>
                 </div>
                 <div style="display: flex; gap: 8px; margin-top: 14px;">
