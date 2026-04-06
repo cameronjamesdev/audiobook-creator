@@ -259,22 +259,41 @@ button { font-family: 'Inter', sans-serif; cursor: pointer; border-radius: 8px; 
     display: flex; align-items: center; justify-content: flex-end; gap: 0.5rem; flex: 1; min-width: max-content;
 }
 
+.action-btn {
+    padding: 0.4rem 0.6rem; font-size: 0.8rem; display: flex; align-items: center; gap: 5px; height: 32px;
+}
+.action-btn i { width: 14px; height: 14px; }
+
 @container (max-width: 850px) {
-    .toolbar-center {
-        order: 3;
-        flex: 100%;
-        margin-top: 5px;
+    .reader-toolbar {
+        justify-content: center;
     }
-    .toolbar-left, .toolbar-right {
+    .toolbar-center {
+        order: -1;
+        flex: 100%;
+        margin-top: 0;
+        margin-bottom: 10px;
+    }
+    .toolbar-left {
+        order: 2;
+        flex: 1;
         min-width: 0;
+        justify-content: center;
+    }
+    .toolbar-right {
+        order: 3;
+        flex: 1;
+        min-width: 0;
+        justify-content: center;
         flex-wrap: wrap;
     }
+    .toolbar-divider { display: none; }
 }
 
 @container (max-width: 500px) {
     .toolbar-left, .toolbar-right {
         flex: 100%;
-        justify-content: center;
+        margin-bottom: 5px;
     }
 }
 

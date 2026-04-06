@@ -10,7 +10,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Merriweather:wght@300;400;700&family=Orbitron:wght@400;700&family=Roboto+Mono:wght@400&family=Caveat:wght@400;500&family=Lora:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
     
-    <link rel="stylesheet" href="styles/style.css?v=2.0">
+    <link rel="stylesheet" href="styles/style.css?v=2.3">
     
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
@@ -78,19 +78,6 @@
                 </div>
             </div>
 
-            <!-- API Keys Group (Hidden natively for local use) -->
-            <div class="config-section" style="display: none;">
-                <h3>System Keys</h3>
-                <div class="form-group">
-                    <label>Gemini API Key (Parsing)</label>
-                    <input type="password" id="geminiKey" class="input-glass" placeholder="AIza...">
-                </div>
-                <div class="form-group">
-                    <label>OpenAI API Key (Voice TTS)</label>
-                    <input type="password" id="openAiKey" class="input-glass" placeholder="sk-...">
-                </div>
-            </div>
-
             <!-- Upload Group -->
             <div class="config-section">
                 <h3>Source Document</h3>
@@ -106,7 +93,8 @@
                 <div class="form-group mb-1">
                     <label>Parsing Engine</label>
                     <select id="engineChoice" class="input-glass">
-                        <option value="gemini" selected>Gemini 2.5 Pro (PDFs + Text)</option>
+                        <option value="gemini" selected>Gemini 2.5 Flash (Fast PDFs + Text)</option>
+                        <option value="gemini-pro">Gemini 2.5 Pro (Powerful PDFs + Text)</option>
                         <option value="openai">OpenAI GPT-4o-mini (Text Only)</option>
                     </select>
                 </div>
@@ -114,6 +102,9 @@
                 <button id="processBtn" class="btn-magic" onclick="app.processDocument()" style="position: relative; overflow: hidden;">
                     <div id="processProgressBar" style="position: absolute; left: 0; top: 0; bottom: 0; width: 0%; background: rgba(255,255,255,0.2); transition: width 0.3s ease;"></div>
                     <span id="processBtnText" style="position: relative; display: flex; align-items: center; gap: 0.5rem;"><i data-lucide="sparkles"></i> Auto-Format & Parse</span>
+                </button>
+                <button id="cancelBtn" class="btn-secondary" onclick="app.cancelParsing()" style="display: none; margin-top: 10px; width: 100%; border-color: rgba(239, 68, 68, 0.4); color: #ef4444; justify-content: center; gap: 5px;">
+                    <i data-lucide="x-circle" style="width: 16px; height: 16px;"></i> Cancel Parsing
                 </button>
                 
                 <div id="activityLog" style="margin-top: 15px; font-size: 0.75rem; font-family: monospace; color: var(--text-app-muted); max-height: 150px; overflow-y: auto; background: rgba(0,0,0,0.2); padding: 8px; border-radius: 5px; display: none;"></div>
@@ -249,11 +240,11 @@
                     <button class="btn-icon" onclick="app.nextPage()" title="Next Page"><i data-lucide="arrow-right"></i></button>
                     
                     <div class="toolbar-divider"></div>
-                    <button class="btn-secondary" onclick="app.saveCurrentBook()" style="padding: 0.4rem 0.8rem; font-size: 0.8rem; display: flex; align-items: center; gap: 5px; border-color: var(--accent-app);"><i data-lucide="bookmark" style="width:14px; height:14px; color: var(--accent-app);"></i> Save</button>
+                    <button class="btn-secondary action-btn" onclick="app.saveCurrentBook()" style="border-color: var(--accent-app);"><i data-lucide="bookmark" style="color: var(--accent-app);"></i> Save</button>
+                    <button class="btn-secondary action-btn" onclick="app.downloadWord()"><i data-lucide="file-text"></i> Word</button>
                     
                     <div class="toolbar-divider"></div>
                     <button class="btn-icon" onclick="app.toggleFullscreen()" title="Fullscreen Presentation"><i data-lucide="maximize" style="width:18px;height:18px;"></i></button>
-                    <button class="btn-secondary" onclick="app.downloadWord()" style="padding: 0.3rem 0.6rem; font-size: 0.75rem; display: flex; align-items: center; gap: 5px;"><i data-lucide="file-text" style="width:14px; height:14px;"></i> Word</button>
                 </div>
             </div>
 
@@ -276,6 +267,6 @@
 
     </div>
 
-    <script src="scripts/app.js?v=2.0" defer></script>
+    <script src="scripts/app.js?v=2.3" defer></script>
 </body>
 </html>

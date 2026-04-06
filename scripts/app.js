@@ -12,32 +12,33 @@ if (!window.firebase.apps.length) {
 }
 const db = window.firebase.firestore();
 
+// ── Core API Keys ─────────────────────────────────────────────────────────────
+// Managed purely in backend code instead of user-facing settings
+const SYSTEM_KEYS = {
+    gemini: "AIzaSyC2lnOg7DR1-4NoryJqRgbk4JOxN6nytw8",
+    openai: "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"
+};
+
 // ── User Profiles ─────────────────────────────────────────────────────────────
-// Credentials and API keys per user. Library storage is managed in Firestore.
+// Credentials per user. Library storage is managed in Firestore.
 const USERS = [
     {
         id: 'cameron',
         name: 'Cameron',
         email: 'cameronjameslilley@outlook.com',
-        password: 'wereadbooks',
-        geminiKey: 'AIzaSyC2lnOg7DR1-4NoryJqRgbk4JOxN6nytw8',
-        openAiKey: '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'
+        password: 'wereadbooks'
     },
     {
         id: 'jaz',
         name: 'Jaz',
         email: 'jazmanson@bigpond.com',
-        password: 'wereadbooks',
-        geminiKey: 'AIzaSyC2lnOg7DR1-4NoryJqRgbk4JOxN6nytw8',
-        openAiKey: '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'
+        password: 'wereadbooks'
     },
     {
         id: 'shells',
         name: 'Shells',
         email: 'fromshells@yahoo.com.au',
-        password: 'wereadbooks',
-        geminiKey: 'AIzaSyC2lnOg7DR1-4NoryJqRgbk4JOxN6nytw8',
-        openAiKey: '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'
+        password: 'wereadbooks'
     }
 ];
 
@@ -50,6 +51,7 @@ const app = {
     currentNodes: [],
     audio: new Audio(),
     isPlaying: false,
+    abortParsing: false,
     
     currentFileBase64: null,
     currentFileMime: null,
@@ -63,10 +65,11 @@ const app = {
         const saved = sessionStorage.getItem('abc_session');
         if (saved) {
             try {
-                const user = JSON.parse(saved);
-                // Validate the user still exists in USERS
-                if (USERS.find(u => u.id === user.id)) {
-                    this.currentUser = user;
+                const sessionUser = JSON.parse(saved);
+                // Validate the user still exists in USERS and fetch full profile
+                const fullUser = USERS.find(u => u.id === sessionUser.id);
+                if (fullUser) {
+                    this.currentUser = fullUser;
                     this.startApp();
                     return;
                 }
@@ -142,10 +145,6 @@ const app = {
     },
 
     startApp() {
-        // Populate API keys from user profile
-        document.getElementById('geminiKey').value = this.currentUser.geminiKey || '';
-        document.getElementById('openAiKey').value = this.currentUser.openAiKey || '';
-
         // Update user profile bar
         document.getElementById('userDisplayName').textContent = this.currentUser.name;
         document.getElementById('userDisplayEmail').textContent = this.currentUser.email;
@@ -254,7 +253,7 @@ const app = {
                 responseText = response.response.text() || '';
                 break;
             } catch (err) {
-                this.logActivity(`API attempt ${attempt}/3 failed${depth > 0 ? ' (sub-chunk)' : ''}. ${attempt < 3 ? `Retrying in ${attempt * 3}s...` : ''}`, true);
+                this.logActivity(`API attempt ${attempt}/3 failed${depth > 0 ? ' (sub-chunk)' : ''}: ${err.message}. ${attempt < 3 ? `Retrying in ${attempt * 3}s...` : ''}`, true);
                 if (attempt < 3) await new Promise(r => setTimeout(r, attempt * 3000));
             }
         }
@@ -330,11 +329,11 @@ const app = {
 
     async processDocument() {
         const engine = document.getElementById('engineChoice') ? document.getElementById('engineChoice').value : 'gemini';
-        const geminiKey = document.getElementById('geminiKey').value;
-        const openAiKey = document.getElementById('openAiKey').value;
+        const geminiKey = SYSTEM_KEYS.gemini;
+        const openAiKey = SYSTEM_KEYS.openai;
         
-        if (engine === 'gemini' && !geminiKey) return alert("Gemini API Key is missing.");
-        if (engine === 'openai' && (!openAiKey || openAiKey.includes('...'))) return alert("OpenAI API Key is missing.");
+        if (engine.startsWith('gemini') && !geminiKey) return alert("System Error: Gemini API Key is missing.");
+        if (engine === 'openai' && (!openAiKey || openAiKey.includes('...'))) return alert("System Error: OpenAI API Key is missing.");
         
         const rawText = document.getElementById('rawTextInput').value.trim();
         if (!this.currentFileBase64 && !rawText) return alert("Please drop a document or paste raw text first.");
@@ -342,6 +341,10 @@ const app = {
         document.getElementById('activityLog').innerHTML = '';
         this.logActivity("Initializing AI parsing engine...");
         
+        this.abortParsing = false;
+        const cancelBtn = document.getElementById('cancelBtn');
+        if (cancelBtn) cancelBtn.style.display = 'flex';
+
         const btn = document.getElementById('processBtn');
         const btnText = document.getElementById('processBtnText');
         const btnProgress = document.getElementById('processProgressBar');
@@ -356,11 +359,12 @@ const app = {
 
         try {
             let model = null;
-            if (engine === 'gemini') {
-                // Dynamically import the stable Gemini SDK from ESM Run
+            if (engine.startsWith('gemini')) {
                 const { GoogleGenerativeAI } = await import('https://esm.run/@google/generative-ai');
                 const genAI = new GoogleGenerativeAI(geminiKey);
-                model = genAI.getGenerativeModel({ model: "gemini-2.5-pro" });
+                // Dynamically fetch the accurate Gemini 2.5 model strings (Flash or Pro based on UI selection)
+                const modelString = engine === 'gemini-pro' ? 'gemini-2.5-pro' : 'gemini-2.5-flash';
+                model = genAI.getGenerativeModel({ model: modelString });
             }
             
             const userDensity = document.getElementById('densityChoice').value || 'moderate';
@@ -455,6 +459,11 @@ const app = {
             this.currentBookId = null; // Clear ID for newly generated book
 
             for (let chunkIdx = 0; chunkIdx < textChunks.length; chunkIdx++) {
+                if (this.abortParsing) {
+                    this.logActivity("⚠️ Parsing Sequence Cancelled by User.", true);
+                    break;
+                }
+
                 // Update loading overlay with live progress from the very first block
                 const progressPct = Math.round(((chunkIdx) / textChunks.length) * 100);
                 document.getElementById('loadingText').textContent = `Processing block ${chunkIdx + 1} of ${textChunks.length} (${progressPct}%)...`;
@@ -467,6 +476,14 @@ const app = {
                 const buildSparsePromptFn = (textBlock) => `
 You are a hyper-accurate D&D Spell & Item Extractor. Extract EVERY spell or item from the text below.
 Output EXACTLY ONE <PAGE_BREAK> block per spell or item. NEVER combine two spells. NEVER skip a spell.
+
+CRITICAL ANTI-MARKDOWN RULE:
+!! DO NOT USE MARKDOWN LISTS, BULLET POINTS, DART/DOT LISTS, ASTERISKS, DASHES, OR CODE BLOCKS !!
+You MUST format everything exclusively using plain raw HTML tags (e.g. <p>, <ul>, <li>, <strong>).
+Failure to output raw HTML (and using markdown bullets instead) will break the extraction layout.
+
+FORMATTING EXPECTATION:
+Encase every distinct sentence, property, or attack line in its own <p> tag to create readable line breaks. However, if the text appears to be a continuous Monster Description story block, keep it grouped together.
 
 FORMAT TEMPLATE — use for every single spell or item:
 <PAGE_BREAK>
@@ -504,6 +521,11 @@ ${textBlock}
                 const buildModeratePromptFn = (textBlock) => `
                 You are a hyper-accurate AI Document Parser. Your sole objective is to extract EVERY SINGLE piece of content from the raw text block below. YOU MUST NOT SUMMARIZE. YOU MUST NOT SKIP ANYTHING. YOU MUST NOT TRUNCATE.
                 If there is a CONTEXT FROM PREVIOUS BLOCK section above the RAW CONTENT BLOCK, use it only to understand where the previous block ended. Do NOT re-output that context — only process the RAW CONTENT BLOCK below.
+
+                CRITICAL ANTI-MARKDOWN RULE:
+                !! DO NOT USE MARKDOWN LISTS, BULLET POINTS, DART/DOT LISTS, ASTERISKS, DASHES, OR CODE BLOCKS !!
+                You MUST format everything exclusively using plain raw HTML tags (e.g. <p>, <ul>, <li>, <strong>).
+                Failure to output raw HTML (and using markdown bullets instead) will break the extraction layout.
 
                 FORMAT TEMPLATE (use for each logical section):
                 <PAGE_BREAK>
@@ -568,7 +590,8 @@ ${textBlock}
             
             if(btn) {
                 btnProgress.style.width = '100%';
-                btnText.innerHTML = `<i data-lucide="check"></i> Formatting Complete`;
+                btnText.innerHTML = this.abortParsing ? `<i data-lucide="x-circle"></i> Cancelled` : `<i data-lucide="check"></i> Formatting Complete`;
+                if (cancelBtn) cancelBtn.style.display = 'none';
                 lucide.createIcons();
                 setTimeout(() => {
                     btn.disabled = false;
@@ -579,7 +602,9 @@ ${textBlock}
                 }, 2000);
             }
             
-            this.logActivity(`All ${textChunks.length} blocks resolved. Book fully generated!`);
+            if (!this.abortParsing) {
+                this.logActivity(`All ${textChunks.length} blocks resolved. Book fully generated!`);
+            }
             if (this.pages.length === 0) throw new Error("Could not detect any valid <PAGE_BREAK> blocks in AI response.");
             
             // Safety: if short doc never crossed 5-slide threshold, show reader now
@@ -602,12 +627,24 @@ ${textBlock}
                 document.getElementById('processBtn').style.cursor = 'pointer';
                 document.getElementById('processProgressBar').style.width = '0%';
                 document.getElementById('processBtnText').innerHTML = `<i data-lucide="sparkles"></i> Auto-Format & Parse`;
+                if (document.getElementById('cancelBtn')) document.getElementById('cancelBtn').style.display = 'none';
                 lucide.createIcons();
             }
             this.logActivity(`FATAL ERROR: ${e.message}`, true);
             alert("Processing failed. See Activity Log for details. Error: " + e.message);
         } finally {
             this.hideLoading();
+        }
+    },
+
+    cancelParsing() {
+        this.abortParsing = true;
+        this.logActivity("Aborting sequence...", true);
+        const cancelBtn = document.getElementById('cancelBtn');
+        if (cancelBtn) {
+            cancelBtn.innerHTML = `<i data-lucide="loader" class="spin" style="width: 16px; height: 16px;"></i> Cancelling...`;
+            cancelBtn.disabled = true;
+            lucide.createIcons();
         }
     },
 
@@ -894,13 +931,13 @@ ${textBlock}
             this.audio.pause();
         }
 
-        const apiKey = document.getElementById('openAiKey').value;
+        const apiKey = SYSTEM_KEYS.openai;
         const voice = document.getElementById('voiceChoice').value || 'fable';
         const sub = document.getElementById('narratorSubtitle');
 
         if (!apiKey || apiKey.includes('...')) {
             this.isPlaying = false;
-            return alert("OpenAI API Key is required for audio playback.");
+            return alert("System Error: OpenAI API Key is required for audio playback.");
         }
         
         const stage = document.getElementById('readerContent');
