@@ -1191,9 +1191,9 @@ ${textBlock}
     async editLibraryItem(id) {
         let book = this.cloudLibraryCache.find(b => b.id === id);
         if (!book) return;
-        const newTitle = prompt("Edit Title:", book.title);
+        const newTitle = prompt("Edit Audiobook Title:", book.title);
         if (!newTitle) return;
-        const newPlaylist = prompt("Edit Playlist tag (leave blank for none):", book.playlist || "");
+        const newPlaylist = prompt("Tag this audiobook into a Playlist (leave blank for no playlist):", book.playlist || "");
         
         try {
             await db.collection("users").doc(this.currentUser.id).collection("books").doc(id).update({
@@ -1241,7 +1241,6 @@ ${textBlock}
         const playlists = new Set(this.cloudLibraryCache.map(b => b.playlist).filter(p => p));
         let html = '<option value="all">Playlist: All</option>';
         playlists.forEach(p => { html += `<option value="${p}">${p}</option>`; });
-        html += '<option value="none">Uncategorized</option>';
         dd.innerHTML = html;
         if (dd.querySelector(`option[value="${currentSelection}"]`)) {
             dd.value = currentSelection;
@@ -1261,9 +1260,7 @@ ${textBlock}
         const playlistFilter = document.getElementById('libraryPlaylist').value;
         
         let filtered = [...this.cloudLibraryCache];
-        if (playlistFilter === 'none') {
-            filtered = filtered.filter(b => !b.playlist);
-        } else if (playlistFilter !== 'all') {
+        if (playlistFilter !== 'all') {
             filtered = filtered.filter(b => b.playlist === playlistFilter);
         }
         
@@ -1276,13 +1273,12 @@ ${textBlock}
         } else if (sortMode === 'za') {
             filtered.sort((a, b) => b.title.localeCompare(a.title));
         } else {
-            // custom drag order
             filtered.sort((a, b) => (a.order || 0) - (b.order || 0));
         }
         
         list.innerHTML = filtered.map(b => `
-            <div data-id="${b.id}" class="library-item" style="background: rgba(255,255,255,0.05); border: 1px solid var(--border-glass); padding: 10px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; cursor: ${sortableEnabled ? 'grab' : 'default'};">
-                ${sortableEnabled ? '<i data-lucide="grip-vertical" style="color: var(--text-app-muted); margin-right: 5px; width: 14px; height:14px; cursor: grab;"></i>' : ''}
+            <div data-id="${b.id}" class="library-item" style="background: rgba(255,255,255,0.05); border: 1px solid var(--border-glass); padding: 10px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; cursor: ${sortableEnabled ? 'default' : 'default'};">
+                ${sortableEnabled ? '<i data-lucide="grip-vertical" class="drag-handle" style="color: var(--text-app-muted); margin-right: 5px; width: 14px; height:14px; cursor: grab;"></i>' : ''}
                 <div style="overflow: hidden; flex: 1; padding-right: 5px;">
                     <strong style="display: block; font-size: 0.9rem; text-overflow: ellipsis; white-space: nowrap; overflow: hidden;" title="${b.title}">${b.title}</strong>
                     <span style="font-size: 0.75rem; color: var(--text-app-muted);">
@@ -1291,7 +1287,7 @@ ${textBlock}
                 </div>
                 <div style="display: flex; gap: 4px;">
                     <button class="btn-primary" onclick="app.loadFromLibrary('${b.id}')" style="padding: 4px; font-size: 0.75rem; border-radius: 4px;" title="Play"><i data-lucide="play" style="width:14px;height:14px;"></i></button>
-                    <button class="btn-secondary" onclick="app.editLibraryItem('${b.id}')" style="padding: 4px; border-radius: 4px; border: 1px solid var(--border-glass);" title="Edit Tags"><i data-lucide="edit-2" style="width:14px;height:14px;"></i></button>
+                    <button class="btn-secondary" onclick="app.editLibraryItem('${b.id}')" style="padding: 4px; border-radius: 4px; border: 1px solid var(--border-glass);" title="Tag Playlist or Edit"><i data-lucide="tag" style="width:14px;height:14px;"></i></button>
                     <button class="btn-icon" onclick="app.deleteFromLibrary('${b.id}')" style="padding: 4px; color: #ff5e5e;" title="Delete"><i data-lucide="trash-2" style="width:14px;height:14px;"></i></button>
                 </div>
             </div>
@@ -1303,7 +1299,9 @@ ${textBlock}
         if (sortableEnabled && window.Sortable) {
             this.sortableInstance = Sortable.create(list, {
                 animation: 150,
-                handle: '.library-item',
+                handle: '.drag-handle',
+                delay: 150, // Helps with touch devices
+                delayOnTouchOnly: true,
                 ghostClass: 'sortable-ghost',
                 onEnd: async (evt) => {
                     const idOrderMap = {};
