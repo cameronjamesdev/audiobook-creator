@@ -362,8 +362,8 @@ const app = {
             if (engine.startsWith('gemini')) {
                 const { GoogleGenerativeAI } = await import('https://esm.run/@google/generative-ai');
                 const genAI = new GoogleGenerativeAI(geminiKey);
-                // Dynamically fetch the accurate Gemini 2.5 model strings (Flash or Pro based on UI selection)
-                const modelString = engine === 'gemini-pro' ? 'gemini-2.5-pro' : 'gemini-2.5-flash';
+                // Dynamically fetch the accurate Gemini 1.5 model strings (Flash or Pro based on UI selection)
+                const modelString = engine === 'gemini-pro' ? 'gemini-1.5-pro' : 'gemini-1.5-flash';
                 model = genAI.getGenerativeModel({ model: modelString });
             }
             
@@ -446,7 +446,7 @@ const app = {
             } else if (useBinaryTransfer) {
                 if (engine === 'openai') {
                     if(btn) { btn.disabled = false; btn.style.cursor = 'pointer'; btnProgress.style.width = '0%'; btnText.innerHTML = `<i data-lucide="sparkles"></i> Auto-Format & Parse`; lucide.createIcons(); }
-                    return alert("OpenAI engine cannot process binary files directly. Please select Gemini 2.5 Pro instead or paste raw text.");
+                    return alert("The Budget engine cannot process binary files directly. Please select the Pro engine instead or paste raw text.");
                 }
                 textChunks = ["<BINARY_TRANSFER>"];
             } else {
@@ -651,7 +651,7 @@ ${textBlock}
     changeTheme(val) {
         document.body.classList.remove('theme-modern', 'theme-fantasy', 'theme-scifi', 'theme-academia');
         document.body.classList.add('theme-' + val);
-        const labels = { modern: 'Modern Theme', fantasy: 'Fantasy Parchment', scifi: 'Sci-Fi Holo', academia: 'Dark Academia' };
+        const labels = { modern: 'Modern Theme', fantasy: 'Fantasy', scifi: 'Sci-Fi', academia: 'Dark Academia' };
         document.getElementById('activeThemeBadge').textContent = labels[val] || val;
     },
 
@@ -710,7 +710,7 @@ ${textBlock}
         let processedContent = page.html_content || '';
         
         let html = '<div class="page-block">';
-        if (page.title) html += '<h2 class="page-header" style="margin: 0; padding: 0; color: var(--page-accent); line-height: 1.1;">' + page.title + '</h2>';
+        if (page.title) html += '<h2 class="page-header" style="color: var(--page-accent); line-height: 1.1;">' + page.title + '</h2>';
         if (page.meta) html += '<div class="page-meta" style="margin-top: 5px; color: var(--page-color-muted); font-style: italic; border-bottom: 1px solid var(--border-glass); padding-bottom: 10px;"><span>' + page.meta + '</span></div>';
         html += statsHtml;
         html += '<div class="page-content" style="flex: 1; overflow-y: auto; padding-right: 15px;">' + processedContent + '</div>';
@@ -908,6 +908,11 @@ ${textBlock}
     },
 
     toggleSidebar() {
+        if (window.innerWidth <= 800) {
+            this.goToSidebar();
+            return;
+        }
+        
         const container = document.querySelector('.app-container');
         const btn = document.getElementById('expandSidebarBtn');
         container.classList.toggle('sidebar-collapsed');
@@ -1125,19 +1130,125 @@ ${textBlock}
         return parsedPages;
     },
 
+    showModal(options) {
+        return new Promise((resolve) => {
+            const overlay = document.getElementById('customModalOverlay');
+            const titleEl = document.getElementById('modalTitle');
+            const descEl = document.getElementById('modalDescription');
+            const formArea = document.getElementById('modalFormArea');
+            const saveBtn = document.getElementById('modalSaveBtn');
+            const cancelBtn = document.getElementById('modalCancelBtn');
+            
+            titleEl.textContent = options.title || "Input";
+            if (options.description) {
+                descEl.textContent = options.description;
+                descEl.style.display = 'block';
+            } else {
+                descEl.style.display = 'none';
+            }
+            
+            let html = '';
+            options.fields.forEach((field, index) => {
+                html += `<div class="form-group" style="margin-top: 1rem;">`;
+                html += `<label style="color: rgba(255,255,255,0.8); font-size: 0.85rem; font-weight: 500; margin-bottom: 0.4rem; display: block;">${field.label}</label>`;
+                
+                if (field.type === 'playlistPicker') {
+                    html += `<input type="text" id="modalInput_${index}" class="input-glass" placeholder="${field.placeholder || ''}" value="${field.value || ''}" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: #fff;">`;
+                    if (field.suggestions && field.suggestions.length > 0) {
+                        html += `<div style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px;">`;
+                        field.suggestions.forEach(suggestion => {
+                            const safeSug = suggestion.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                            html += `<span onclick="document.getElementById('modalInput_${index}').value='${safeSug}'" style="background: rgba(168, 85, 247, 0.2); border: 1px solid rgba(168, 85, 247, 0.4); color: #e9d5ff; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='rgba(168, 85, 247, 0.4)'" onmouseout="this.style.background='rgba(168, 85, 247, 0.2)'">${suggestion}</span>`;
+                        });
+                        html += `</div>`;
+                    }
+                } else if (field.type === 'checkboxList') {
+                    html += `<div style="max-height: 250px; overflow-y: auto; background: rgba(0,0,0,0.2); border-radius: 8px; padding: 10px; border: 1px solid var(--border-glass);">`;
+                    if (field.items && field.items.length > 0) {
+                        field.items.forEach((item, i) => {
+                            html += `<label style="display: flex; align-items: center; gap: 10px; padding: 5px; cursor: pointer; color: #fff;">
+                                <input type="checkbox" id="modalCheckbox_${index}_${i}" value="${item.id}" ${item.checked ? 'checked' : ''} style="accent-color: var(--accent-app); width: 16px; height: 16px;">
+                                <span style="font-size: 0.9rem; flex: 1; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;" title="${item.label}">${item.label}</span>
+                            </label>`;
+                        });
+                    } else {
+                        html += `<p style="color: rgba(255,255,255,0.5); font-size: 0.85rem; text-align: center; margin: 10px 0;">No available items to select.</p>`;
+                    }
+                    html += `</div>`;
+                } else {
+                    html += `<input type="${field.type || 'text'}" id="modalInput_${index}" class="input-glass" placeholder="${field.placeholder || ''}" value="${field.value || ''}" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: #fff;">`;
+                }
+                html += `</div>`;
+            });
+            formArea.innerHTML = html;
+            
+            overlay.style.display = 'flex';
+            
+            setTimeout(() => {
+                const firstInput = document.getElementById('modalInput_0');
+                if (firstInput) {
+                    firstInput.focus();
+                    if (firstInput.value) firstInput.select();
+                }
+            }, 50);
+
+            const cleanup = () => {
+                overlay.style.display = 'none';
+                saveBtn.onclick = null;
+                cancelBtn.onclick = null;
+                // Remove Enter key listener
+                document.removeEventListener('keydown', handleEnter);
+            };
+
+            const handleEnter = (e) => {
+                if (e.key === 'Enter') saveBtn.click();
+                if (e.key === 'Escape') cancelBtn.click();
+            };
+            document.addEventListener('keydown', handleEnter);
+
+            cancelBtn.onclick = () => {
+                cleanup();
+                resolve(null);
+            };
+
+            saveBtn.onclick = () => {
+                const results = options.fields.map((f, i) => {
+                    if (f.type === 'checkboxList') {
+                        const checked = [];
+                        if (f.items) {
+                            f.items.forEach((item, idx) => {
+                                const cb = document.getElementById(`modalCheckbox_${i}_${idx}`);
+                                if (cb && cb.checked) checked.push(cb.value);
+                            });
+                        }
+                        return checked;
+                    }
+                    return document.getElementById(`modalInput_${i}`).value;
+                });
+                cleanup();
+                resolve(results.length === 1 ? results[0] : results);
+            };
+        });
+    },
+
     async saveCurrentBook() {
         if (!this.pages || this.pages.length === 0) return alert("No active document loaded to save!");
-        const title = prompt("Enter a title for this Audiobook in your library:", "My Saved Book");
-        if (!title) return;
         
         let existingPlaylists = new Set(this.cloudLibraryCache.map(b => b.playlist).filter(p => p));
-        let pListArray = Array.from(existingPlaylists);
-        let playlistStr = "";
-        if (pListArray.length > 0) {
-            playlistStr = prompt(`Enter a Playlist tag (or leave blank). Existing tags: ${pListArray.join(', ')}`, "");
-        } else {
-            playlistStr = prompt("Enter a Playlist tag to organize your library (or leave blank)", "");
-        }
+        let pListArray = Array.from(existingPlaylists).sort();
+        
+        const results = await this.showModal({
+            title: "Save to Library",
+            description: "Name your audiobook and optionally assign it to a playlist tag.",
+            fields: [
+                { label: "Audiobook Title", value: "My Saved Book", placeholder: "E.g., D&D Player's Handbook" },
+                { label: "Playlist Tag (Optional)", type: "playlistPicker", suggestions: pListArray, placeholder: "Select or type a new tag" }
+            ]
+        });
+        
+        if (!results) return; // User cancelled
+        const [title, playlistStr] = results;
+        if (!title.trim()) return alert("A title is required to save.");
         
         const id = this.currentBookId || 'book_' + Date.now();
         this.currentBookId = id;
@@ -1145,7 +1256,7 @@ ${textBlock}
         const orderIndex = this.cloudLibraryCache.length ? Math.min(...this.cloudLibraryCache.map(b => b.order || 0)) - 1 : 0;
         
         const bookData = {
-            title,
+            title: title.trim(),
             playlist: playlistStr ? playlistStr.trim() : "",
             order: orderIndex,
             date: new Date().toLocaleDateString(),
@@ -1188,20 +1299,75 @@ ${textBlock}
         }
     },
     
-    async editLibraryItem(id) {
+    async togglePrivate(id) {
         let book = this.cloudLibraryCache.find(b => b.id === id);
         if (!book) return;
-        const newTitle = prompt("Edit Audiobook Title:", book.title);
-        if (!newTitle) return;
-        const newPlaylist = prompt("Tag this audiobook into a Playlist (leave blank for no playlist):", book.playlist || "");
+        try {
+            await db.collection("users").doc(this.currentUser.id).collection("books").doc(id).update({
+                private: !book.private
+            });
+        } catch (e) {
+            console.error("Toggle private error:", e);
+        }
+    },
+    
+    async toggleArchive(id) {
+        let book = this.cloudLibraryCache.find(b => b.id === id);
+        if (!book) return;
+        try {
+            await db.collection("users").doc(this.currentUser.id).collection("books").doc(id).update({
+                archived: !book.archived
+            });
+        } catch (e) {
+            console.error("Toggle archive error:", e);
+        }
+    },
+    
+    async editLibraryTitle(id) {
+        let book = this.cloudLibraryCache.find(b => b.id === id);
+        if (!book) return;
+        
+        const newTitle = await this.showModal({
+            title: "Rename Audiobook",
+            fields: [
+                { label: "Audiobook Title", value: book.title }
+            ]
+        });
+        
+        if (newTitle === null || !newTitle.trim() || newTitle.trim() === book.title) return;
         
         try {
             await db.collection("users").doc(this.currentUser.id).collection("books").doc(id).update({
-                title: newTitle,
-                playlist: newPlaylist ? newPlaylist.trim() : ""
+                title: newTitle.trim()
             });
         } catch (e) {
-            console.error("Edit error:", e);
+            console.error("Edit title error:", e);
+        }
+    },
+
+    async editLibraryPlaylist(id) {
+        let book = this.cloudLibraryCache.find(b => b.id === id);
+        if (!book) return;
+        
+        let existingPlaylists = new Set(this.cloudLibraryCache.map(b => b.playlist).filter(p => p));
+        let pListArray = Array.from(existingPlaylists).sort();
+        
+        const newPlaylist = await this.showModal({
+            title: "Assign Playlist",
+            description: "Tag this audiobook into a Playlist (leave blank to remove from playlist).",
+            fields: [
+                { label: "Playlist Tag", type: "playlistPicker", suggestions: pListArray, value: book.playlist || "", placeholder: "Select or type a tag" }
+            ]
+        });
+        
+        if (newPlaylist === null) return; // user cancelled
+        
+        try {
+            await db.collection("users").doc(this.currentUser.id).collection("books").doc(id).update({
+                playlist: newPlaylist.trim()
+            });
+        } catch (e) {
+            console.error("Edit playlist error:", e);
         }
     },
     
@@ -1238,15 +1404,37 @@ ${textBlock}
         const dd = document.getElementById('libraryPlaylist');
         if (!dd) return;
         const currentSelection = dd.value;
-        const playlists = new Set(this.cloudLibraryCache.map(b => b.playlist).filter(p => p));
+        const playlists = Array.from(new Set(this.cloudLibraryCache.map(b => b.playlist).filter(p => p))).sort();
         let html = '<option value="all">Playlist: All</option>';
         playlists.forEach(p => { html += `<option value="${p}">${p}</option>`; });
+        html += '<option disabled>──────────</option>';
+        html += '<option value="SYSTEM_ARCHIVE">📦 Archived Books</option>';
         dd.innerHTML = html;
         if (dd.querySelector(`option[value="${currentSelection}"]`)) {
             dd.value = currentSelection;
         }
     },
     
+    getFilteredLibrary(includePrivate = true) {
+        if (!this.cloudLibraryCache) return [];
+        const playlistFilter = document.getElementById('libraryPlaylist') ? document.getElementById('libraryPlaylist').value : 'all';
+        let filtered = [...this.cloudLibraryCache];
+        
+        if (playlistFilter === 'SYSTEM_ARCHIVE') {
+            filtered = filtered.filter(b => b.archived === true);
+        } else {
+            filtered = filtered.filter(b => b.archived !== true);
+            if (playlistFilter !== 'all') {
+                filtered = filtered.filter(b => b.playlist === playlistFilter);
+            }
+        }
+        
+        if (!includePrivate) {
+            filtered = filtered.filter(b => !b.private);
+        }
+        return filtered;
+    },
+
     renderLibrary() {
         const list = document.getElementById('libraryList');
         if (!list) return;
@@ -1259,10 +1447,7 @@ ${textBlock}
         const sortMode = document.getElementById('librarySort').value;
         const playlistFilter = document.getElementById('libraryPlaylist').value;
         
-        let filtered = [...this.cloudLibraryCache];
-        if (playlistFilter !== 'all') {
-            filtered = filtered.filter(b => b.playlist === playlistFilter);
-        }
+        let filtered = this.getFilteredLibrary(true);
         
         const sortableEnabled = (sortMode === 'custom' && playlistFilter === 'all');
         
@@ -1279,22 +1464,28 @@ ${textBlock}
         list.innerHTML = filtered.map(b => `
             <div data-id="${b.id}" class="library-item" style="background: rgba(255,255,255,0.05); border: 1px solid var(--border-glass); padding: 10px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; cursor: ${sortableEnabled ? 'default' : 'default'};">
                 ${sortableEnabled ? '<i data-lucide="grip-vertical" class="drag-handle" style="color: var(--text-app-muted); margin-right: 5px; width: 14px; height:14px; cursor: grab;"></i>' : ''}
-                <div style="overflow: hidden; flex: 1; padding-right: 5px;">
+                <div style="overflow: hidden; flex: 1; padding-right: 5px; opacity: ${b.private ? '0.7' : '1'};">
                     <strong style="display: block; font-size: 0.9rem; text-overflow: ellipsis; white-space: nowrap; overflow: hidden;" title="${b.title}">${b.title}</strong>
                     <span style="font-size: 0.75rem; color: var(--text-app-muted);">
                         ${b.pages ? b.pages.length : 0} Pages • ${b.playlist ? `<span style="color: var(--accent-app);">🏷️ ${b.playlist}</span> • ` : ''}${b.date}
                     </span>
                 </div>
                 <div style="display: flex; gap: 4px;">
+                    <button class="btn-secondary" onclick="app.togglePrivate('${b.id}')" style="padding: 4px; border-radius: 4px; border: 1px solid var(--border-glass); color: ${b.private ? '#ff5e5e' : 'var(--text-app-muted)'};" title="${b.private ? 'Private: Hidden from exports' : 'Public'}"><i data-lucide="${b.private ? 'eye-off' : 'eye'}" style="width:14px;height:14px;"></i></button>
                     <button class="btn-primary" onclick="app.loadFromLibrary('${b.id}')" style="padding: 4px; font-size: 0.75rem; border-radius: 4px;" title="Play"><i data-lucide="play" style="width:14px;height:14px;"></i></button>
-                    <button class="btn-secondary" onclick="app.editLibraryItem('${b.id}')" style="padding: 4px; border-radius: 4px; border: 1px solid var(--border-glass);" title="Tag Playlist or Edit"><i data-lucide="tag" style="width:14px;height:14px;"></i></button>
+                    <button class="btn-secondary" onclick="app.editLibraryTitle('${b.id}')" style="padding: 4px; border-radius: 4px; border: 1px solid var(--border-glass);" title="Rename Audiobook"><i data-lucide="edit-2" style="width:14px;height:14px;"></i></button>
+                    <button class="btn-secondary" onclick="app.editLibraryPlaylist('${b.id}')" style="padding: 4px; border-radius: 4px; border: 1px solid var(--border-glass);" title="Assign Playlist Tag"><i data-lucide="tag" style="width:14px;height:14px;"></i></button>
+                    <button class="btn-secondary" onclick="app.toggleArchive('${b.id}')" style="padding: 4px; border-radius: 4px; border: 1px solid var(--border-glass); color: ${b.archived ? 'var(--accent-app)' : 'var(--text-app-muted)'};" title="${b.archived ? 'Unarchive' : 'Send to Archive'}"><i data-lucide="${b.archived ? 'archive-restore' : 'archive'}" style="width:14px;height:14px;"></i></button>
                     <button class="btn-icon" onclick="app.deleteFromLibrary('${b.id}')" style="padding: 4px; color: #ff5e5e;" title="Delete"><i data-lucide="trash-2" style="width:14px;height:14px;"></i></button>
                 </div>
             </div>
         `).join('');
         lucide.createIcons();
         
-        if (this.sortableInstance) this.sortableInstance.destroy();
+        if (this.sortableInstance) {
+            try { this.sortableInstance.destroy(); } catch(e) {}
+            this.sortableInstance = null;
+        }
         
         if (sortableEnabled && window.Sortable) {
             this.sortableInstance = Sortable.create(list, {
@@ -1340,20 +1531,41 @@ ${textBlock}
         URL.revokeObjectURL(url);
     },
 
-    exportLibrary() {
-        const library = this.cloudLibraryCache || [];
-        if (library.length === 0) return alert('Your cloud library is empty — nothing to export.');
+    async exportLibrary() {
+        const eligibleBooks = this.getFilteredLibrary(false); // Excludes private books
         
-        const blob = new Blob([JSON.stringify(library)], { type: 'application/json' });
+        if (eligibleBooks.length === 0) {
+            return alert("There are no public audiobooks in the current view to export.");
+        }
+        
+        const selection = await this.showModal({
+            title: "Export Audiobooks",
+            description: "Select which audiobooks to export. Private books have been automatically excluded.",
+            fields: [
+                { 
+                    label: "Books to Export", 
+                    type: "checkboxList", 
+                    items: eligibleBooks.map(b => ({ id: b.id, label: b.title, checked: true })) 
+                }
+            ]
+        });
+        
+        if (!selection) return; // User cancelled
+        
+        const idsToExport = selection;
+        if (idsToExport.length === 0) return alert("No books selected for export.");
+        
+        const libraryToExport = eligibleBooks.filter(b => idsToExport.includes(b.id));
+        
+        const blob = new Blob([JSON.stringify(libraryToExport)], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `audiobooks_${this.currentUser.id}.json`;
+        a.download = `audiobooks_${this.currentUser.id}_export.json`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
-        alert(`Exported ${library.length} book(s) from cloud.`);
     },
 
     importLibrary() {

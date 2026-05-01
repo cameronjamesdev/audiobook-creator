@@ -197,6 +197,11 @@ body {
 }
 .input-glass:focus { outline: none; border-color: var(--accent-app); box-shadow: 0 0 0 3px var(--accent-glow); }
 
+select.input-glass option {
+    color: #1d1d1f; /* Statically dark text for dropdown options */
+    background: #ffffff;
+}
+
 /* Buttons */
 button { font-family: 'Inter', sans-serif; cursor: pointer; border-radius: 8px; font-weight: 600; border: none; transition: all 0.2s ease; }
 .btn-primary { background: var(--accent-app); color: #fff; padding: 0.8rem 1.5rem; box-shadow: 0 4px 15px var(--accent-glow); }
@@ -395,8 +400,8 @@ button { font-family: 'Inter', sans-serif; cursor: pointer; border-radius: 8px; 
     font-family: var(--font-heading);
     font-weight: 700;
     color: var(--page-accent);
-    margin-bottom: 2.2rem; /* Increased from 1.5rem for breathing room below title */
-    font-size: 2.5em;
+    margin-bottom: 1.2rem; 
+    font-size: 1.8em;
     line-height: 1.1;
     border-bottom: 2px solid var(--accent-app);
     padding-bottom: 0.5rem;
@@ -497,9 +502,18 @@ button { font-family: 'Inter', sans-serif; cursor: pointer; border-radius: 8px; 
     margin-bottom: 1.2em;
 }
 
+.page-content h1, .page-content h2 {
+    font-family: var(--font-heading);
+    font-size: 1.4em;
+    font-weight: 700;
+    color: var(--page-accent);
+    margin-top: 1.5em;
+    margin-bottom: 0.5em;
+}
+
 .page-content h3 {
     font-family: var(--font-heading);
-    font-size: 1.25em;
+    font-size: 1.18em;
     font-weight: 700;
     color: var(--page-accent);
     margin-top: 1.5em;
@@ -509,7 +523,7 @@ button { font-family: 'Inter', sans-serif; cursor: pointer; border-radius: 8px; 
 
 .page-content h4 {
     font-family: var(--font-heading);
-    font-size: 1.05em;
+    font-size: 1.0em;
     font-weight: 700;
     color: var(--page-color-muted);
     margin-top: 1.2em;
@@ -559,6 +573,21 @@ button { font-family: 'Inter', sans-serif; cursor: pointer; border-radius: 8px; 
     background: rgba(0,0,0,0.8); color: white; padding: 1rem 2rem;
     border-radius: 50px; font-size: 1.2rem; font-family: 'Inter', sans-serif;
     backdrop-filter: blur(10px); text-align: center; max-width: 60%; z-index: 100;
+}
+
+/* iOS Pseudo-Fullscreen Fallback */
+.fake-fullscreen {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    z-index: 99999 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: var(--bg-app) !important;
+    border-radius: 0 !important;
+    transform: none !important;
 }
 
 /* Loading Overlay */
@@ -697,7 +726,7 @@ button { font-family: 'Inter', sans-serif; cursor: pointer; border-radius: 8px; 
     .panel-sidebar {
         width: 100vw !important;
         margin-left: 0 !important;
-        padding: 1.5rem;
+        padding: 1.5rem 1.5rem 0 1.5rem; /* Remove bottom padding so sticky can sit flush */
     }
     
     .panel-reader {
@@ -705,14 +734,27 @@ button { font-family: 'Inter', sans-serif; cursor: pointer; border-radius: 8px; 
         flex: none;
     }
     
-    /* Hide desktop collapse buttons */
+    /* Keep settings toggle button visible on mobile */
     .desktop-toggle-btn {
-        display: none !important;
+        display: flex !important;
     }
     
     .page-block {
         padding: 5% 5%;
         max-width: 100%;
+    }
+    .page-header {
+        font-size: 1.4em;
+        margin-bottom: 1rem;
+    }
+    .page-content h1, .page-content h2 {
+        font-size: 1.2em;
+    }
+    .page-content h3 {
+        font-size: 1.1em;
+    }
+    .page-content h4 {
+        font-size: 1.0em;
     }
 
     .login-card {
@@ -721,21 +763,83 @@ button { font-family: 'Inter', sans-serif; cursor: pointer; border-radius: 8px; 
     }
     
     .reader-toolbar {
-        padding: 15px 10px;
-        gap: 15px;
-        flex-direction: column;
-        justify-content: center;
+        flex-direction: row;
+        justify-content: space-between;
+        padding: 8px 5px;
+        gap: 5px;
         height: auto;
-        min-height: 70px;
-    }
-    .toolbar-left, .toolbar-center, .toolbar-right {
-        justify-content: center;
-        width: 100%;
-        flex: none;
-        order: unset;
+        min-height: 50px;
         flex-wrap: wrap;
     }
-    .toolbar-right { justify-content: center; margin-top: 5px; }
+    .toolbar-left {
+        display: flex !important; /* Keep left toolbar to hold the mobile Options button */
+        gap: 5px;
+    }
+    .toolbar-left .badge {
+        display: none !important; /* Only hide badges on mobile */
+    }
+    .mobile-only-btn {
+        display: flex !important;
+        align-items: center;
+    }
+    .toolbar-center {
+        width: auto;
+        flex: none;
+        justify-content: center;
+    }
+    /* Keep speed slider visible on mobile */
+    .toolbar-right {
+        width: auto;
+        flex: none;
+        margin-top: 0;
+        gap: 5px;
+    }
+    
+    /* Hide Save, Word, and Options buttons when in Fullscreen on mobile */
+    .panel-reader:fullscreen .action-btn,
+    .panel-reader.fake-fullscreen .action-btn,
+    .panel-reader:fullscreen .toolbar-divider,
+    .panel-reader.fake-fullscreen .toolbar-divider,
+    .panel-reader:fullscreen .desktop-toggle-btn,
+    .panel-reader.fake-fullscreen .desktop-toggle-btn {
+        display: none !important;
+    }
+}
+
+/* Ultra-Small Mobile Layout (Rigid 2-Row Enforced) */
+@media (max-width: 650px) {
+    .reader-toolbar {
+        flex-wrap: wrap !important;
+        gap: 5px !important;
+        padding: 5px !important;
+        justify-content: space-between !important;
+    }
+    .toolbar-left { order: 1; flex: 0 1 auto; }
+    .toolbar-right { order: 2; flex: 0 1 auto; }
+    .toolbar-center { order: 3; width: 100%; justify-content: center; margin-top: 5px; }
+
+    .toolbar-right .action-btn,
+    .toolbar-right .toolbar-divider {
+        display: none !important;
+    }
+    
+    /* Dynamically shrink the playback center controls */
+    .toolbar-center > div {
+        padding: 2px 8px !important;
+        gap: 2px !important;
+    }
+    .toolbar-center .btn-icon, .toolbar-right .btn-icon {
+        padding: 0.4rem !important;
+    }
+    .toolbar-center .btn-primary {
+        width: 34px !important;
+        height: 34px !important;
+    }
+    /* Keep speed slider visible as requested by user */
+    #pageIndicator {
+        font-size: 0.75rem !important;
+        min-width: 30px !important;
+    }
 }
 
 /* Mobile Navigation Buttons */
@@ -759,32 +863,48 @@ button { font-family: 'Inter', sans-serif; cursor: pointer; border-radius: 8px; 
     transition: all 0.2s ease;
 }
 
-.mobile-nav-btn.floating-top {
-    position: absolute;
-    top: 10px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: auto;
-    z-index: 50;
-    margin: 0;
-    padding: 0.5rem 1rem;
-    border-radius: 50px;
-    font-size: 0.85rem;
-}
-
 .mobile-nav-btn:hover {
-    transform: translateY(-2px) translateX(-50%);
+    transform: translateY(-2px);
     filter: brightness(1.1);
 }
 
+.mobile-nav-btn.floating-top {
+    position: fixed; /* Changed to fixed so it stays in view securely */
+    top: 15px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: auto;
+    z-index: 1000;
+    margin: 0;
+    padding: 0.5rem 1.2rem;
+    border-radius: 50px;
+    font-size: 0.85rem;
+    background: rgba(20,20,30,0.6);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border: 1px solid rgba(255,255,255,0.15);
+    color: #fff;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    font-weight: 500;
+}
+
+.mobile-nav-btn.floating-top:hover {
+    transform: translateY(-2px) translateX(-50%);
+    background: rgba(255,255,255,0.1);
+}
+
 .mobile-nav-btn-sidebar {
-    position: sticky;
+    position: sticky; /* Sticky avoids iOS absolute/fixed transform container bugs */
     bottom: 0;
-    margin-top: 2rem;
+    width: calc(100% + 3rem); /* stretch to the padding edges */
+    margin-left: -1.5rem;
+    margin-right: -1.5rem;
     margin-bottom: 0;
+    margin-top: 2rem;
+    padding: 1.2rem;
     border-radius: 12px 12px 0 0;
     background: linear-gradient(135deg, var(--accent-app), #a855f7);
-    z-index: 10;
+    z-index: 1000;
 }
 
 /* Desktop Collapse Button */

@@ -94,9 +94,9 @@
                 <div class="form-group mb-1">
                     <label>Parsing Engine</label>
                     <select id="engineChoice" class="input-glass">
-                        <option value="gemini" selected>Gemini 2.5 Flash (Fast PDFs + Text)</option>
-                        <option value="gemini-pro">Gemini 2.5 Pro (Powerful PDFs + Text)</option>
-                        <option value="openai">OpenAI GPT-4o-mini (Text Only)</option>
+                        <option value="gemini-pro" selected>Pro (PDFs & text)</option>
+                        <option value="gemini">Fast (PDFs & text)</option>
+                        <option value="openai">Budget (Text)</option>
                     </select>
                 </div>
 
@@ -118,9 +118,9 @@
                     <label>Theme Variant</label>
                     <select id="themeChoice" class="input-glass" onchange="app.changeTheme(this.value)">
                         <option value="modern" selected>Modern Minimalist</option>
-                        <option value="fantasy">Spells & Parchment (D&D)</option>
-                        <option value="scifi">Sci-Fi Holo</option>
                         <option value="academia">Dark Academia</option>
+                        <option value="fantasy">Fantasy</option>
+                        <option value="scifi">Sci-Fi</option>
                     </select>
                 </div>
 
@@ -146,7 +146,7 @@
                 <div class="form-group mt-1">
                     <label>Content Density</label>
                     <select id="densityChoice" class="input-glass">
-                        <option value="sparse">Sparse (1 item / page)</option>
+                        <option value="sparse">Sparse (1 item per page)</option>
                         <option value="moderate" selected>Moderate (Paragraphs)</option>
                         <option value="dense">Dense (Textbook)</option>
                     </select>
@@ -214,14 +214,11 @@
 
         <!-- Right Reader Stage -->
         <main class="panel-reader">
-            <!-- Mobile "Back" button -->
-            <button class="mobile-nav-btn floating-top" onclick="app.goToSidebar()">
-                <i data-lucide="arrow-left"></i> Back to Options
-            </button>
 
             <div class="reader-toolbar">
                 <!-- LEFT: Settings & Meta badges -->
                 <div class="toolbar-left">
+
                     <button id="expandSidebarBtn" class="desktop-toggle-btn expand-sidebar-btn" onclick="app.toggleSidebar()" title="Show Settings Sidebar" style="display: none; font-size: 0.8rem; padding: 0.4rem 0.6rem; gap: 5px; white-space: nowrap;">
                         <i data-lucide="panel-left-open" style="width:18px;height:18px;"></i> Show Settings
                     </button>
@@ -272,6 +269,23 @@
 
             </div>
         </main>
+
+        <!-- Custom UI Modal -->
+        <div id="customModalOverlay" class="login-overlay" style="display: none; z-index: 100000;">
+            <div class="login-card" style="max-width: 450px; padding: 2rem;">
+                <div class="login-brand" style="margin-bottom: 1.5rem; text-align: left;">
+                    <h2 id="modalTitle" style="color: #fff; font-family: 'Inter', sans-serif; font-size: 1.4rem; margin-bottom: 0;">Modal Title</h2>
+                    <p id="modalDescription" style="color: rgba(255,255,255,0.6); font-size: 0.85rem; margin-top: 5px; display: none;"></p>
+                </div>
+                <div id="modalFormArea">
+                    <!-- Dynamic inputs injected here by app.js -->
+                </div>
+                <div style="display: flex; gap: 10px; margin-top: 1.5rem; justify-content: flex-end;">
+                    <button class="btn-secondary" id="modalCancelBtn" style="color: #fff; border-color: rgba(255,255,255,0.2);">Cancel</button>
+                    <button class="btn-primary" id="modalSaveBtn">Save</button>
+                </div>
+            </div>
+        </div>
 
         <!-- Loading Overlay -->
         <div id="loadingOverlay" class="loading-overlay" style="display: none;">
