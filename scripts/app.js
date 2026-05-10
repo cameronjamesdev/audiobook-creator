@@ -362,8 +362,8 @@ const app = {
             if (engine.startsWith('gemini')) {
                 const { GoogleGenerativeAI } = await import('https://esm.run/@google/generative-ai');
                 const genAI = new GoogleGenerativeAI(geminiKey);
-                // Dynamically fetch the accurate Gemini 1.5 model strings (Flash or Pro based on UI selection)
-                const modelString = engine === 'gemini-pro' ? 'gemini-1.5-pro' : 'gemini-1.5-flash';
+                // Dynamically fetch the accurate Gemini model strings (Flash or Pro based on UI selection)
+                const modelString = engine === 'gemini-pro' ? 'gemini-pro-latest' : 'gemini-flash-latest';
                 model = genAI.getGenerativeModel({ model: modelString });
             }
             
