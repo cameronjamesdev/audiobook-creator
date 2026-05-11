@@ -868,10 +868,27 @@ ${textBlock}
         const reader = document.querySelector('.panel-reader');
         const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
         
+        // Helper to attempt forcing landscape orientation
+        const lockLandscape = () => {
+            if (window.screen && window.screen.orientation && window.screen.orientation.lock) {
+                window.screen.orientation.lock('landscape').catch(() => {});
+            }
+        };
+
+        const unlockOrientation = () => {
+            if (window.screen && window.screen.orientation && window.screen.orientation.unlock) {
+                window.screen.orientation.unlock();
+            }
+        };
+        
         // Native fallback check for iOS devices that reject fullscreen on non-video elements
-        // Also force fake fullscreen on all iOS/iPad to prevent Apple's native swipe gestures from closing the app
         if (isIOS || (!document.fullscreenEnabled && !reader.webkitRequestFullscreen)) {
             reader.classList.toggle('fake-fullscreen');
+            if (reader.classList.contains('fake-fullscreen')) {
+                lockLandscape();
+            } else {
+                unlockOrientation();
+            }
             return;
         }
 
@@ -879,15 +896,11 @@ ${textBlock}
             const req = reader.requestFullscreen || reader.webkitRequestFullscreen || reader.msRequestFullscreen;
             if (req) {
                 req.call(reader).then(() => {
-                    if (window.screen && window.screen.orientation && window.screen.orientation.lock) {
-                        window.screen.orientation.lock('landscape').catch(e => console.log('Orientation lock not supported', e));
-                    }
+                    lockLandscape();
                 }).catch(err => {
                     console.warn("Fullscreen failed, using fake fullscreen fallback", err);
                     reader.classList.add('fake-fullscreen');
-                    if (window.screen && window.screen.orientation && window.screen.orientation.lock) {
-                        window.screen.orientation.lock('landscape').catch(() => {});
-                    }
+                    lockLandscape();
                 });
             }
         } else {

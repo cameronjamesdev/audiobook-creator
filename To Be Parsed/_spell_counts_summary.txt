@@ -1,0 +1,22 @@
+Hermes — Spell Counts Summary (To Be Parsed)
+Generated: 2026-04-08 15:29:59 ACST+0930
+Source: C:\Users\camer\OneDrive\Documents\Audiobook Creator\To Be Parsed
+
+Per-level counts
+- Cantrips (0): 44
+- Level 1: 73
+- Level 2: 73
+- Level 3: 67
+- Level 4: 48
+- Level 5: 59
+- Level 6: 46
+- Level 7: 25
+- Level 8: 22
+- Level 9: 20
+
+Highlights
+- Levels 3 + 4 combined: 115
+- All levels combined: 477
+
+Notes
+- Counts are derived by parsing each Level N text file and tallying distinct spell entries by their "Casting Time:" headers within those files.

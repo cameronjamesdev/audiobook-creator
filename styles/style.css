@@ -712,6 +712,13 @@ button { font-family: 'Inter', sans-serif; cursor: pointer; border-radius: 8px; 
     }
 }
 
+/* Small Desktop & iPad Landscape */
+@media (max-width: 1024px) {
+    .toolbar-left .badge {
+        display: none !important;
+    }
+}
+
 /* Tablet Portrait & Mobile Landscape / Portrait */
 @media (max-width: 800px) {
     .app-container {
@@ -761,7 +768,7 @@ button { font-family: 'Inter', sans-serif; cursor: pointer; border-radius: 8px; 
         padding: 2rem;
         max-width: 90%;
     }
-    
+    /* Single-Row Mobile Layout Priority */
     .reader-toolbar {
         flex-direction: row;
         justify-content: space-between;
@@ -769,73 +776,71 @@ button { font-family: 'Inter', sans-serif; cursor: pointer; border-radius: 8px; 
         gap: 5px;
         height: auto;
         min-height: 50px;
-        flex-wrap: wrap;
+        flex-wrap: nowrap !important;
+        overflow: hidden;
     }
     .toolbar-left {
-        display: flex !important; /* Keep left toolbar to hold the mobile Options button */
+        display: flex !important;
         gap: 5px;
+        flex: 0 1 auto;
     }
     .toolbar-left .badge {
-        display: none !important; /* Only hide badges on mobile */
-    }
-    .mobile-only-btn {
-        display: flex !important;
-        align-items: center;
+        display: none !important; /* Priority 1: Hide badges */
     }
     .toolbar-center {
         width: auto;
-        flex: none;
+        flex: 0 1 auto;
         justify-content: center;
     }
-    /* Keep speed slider visible on mobile */
     .toolbar-right {
         width: auto;
-        flex: none;
+        flex: 0 1 auto;
         margin-top: 0;
         gap: 5px;
     }
     
-    /* Hide Save, Word, and Options buttons when in Fullscreen on mobile */
-    .panel-reader:fullscreen .action-btn,
-    .panel-reader.fake-fullscreen .action-btn,
-    .panel-reader:fullscreen .toolbar-divider,
-    .panel-reader.fake-fullscreen .toolbar-divider,
-    .panel-reader:fullscreen .desktop-toggle-btn,
-    .panel-reader.fake-fullscreen .desktop-toggle-btn {
-        display: none !important;
-    }
-}
-
-/* Ultra-Small Mobile Layout (Rigid 2-Row Enforced) */
-@media (max-width: 650px) {
-    .reader-toolbar {
-        flex-wrap: wrap !important;
-        gap: 5px !important;
-        padding: 5px !important;
-        justify-content: space-between !important;
-    }
-    .toolbar-left { order: 1; flex: 0 1 auto; }
-    .toolbar-right { order: 2; flex: 0 1 auto; }
-    .toolbar-center { order: 3; width: 100%; justify-content: center; margin-top: 5px; }
-
+    /* Priority 2: Hide Save and Word buttons */
     .toolbar-right .action-btn,
     .toolbar-right .toolbar-divider {
         display: none !important;
     }
     
+    /* Hide Options buttons when in Fullscreen on mobile */
+    .panel-reader:fullscreen .desktop-toggle-btn,
+    .panel-reader.fake-fullscreen .desktop-toggle-btn {
+        display: none !important;
+    }
+    
+    /* Fix Fake Fullscreen Black Screen Bug */
+    .panel-reader.fake-fullscreen {
+        position: absolute !important;
+        top: 0 !important;
+        left: 100vw !important; /* Compensate for the .app-container transform */
+        width: 100vw !important;
+        height: 100dvh !important;
+        z-index: 99999 !important;
+    }
+}
+
+/* Ultra-Small Mobile Layout (Shrink Elements to fit Single Row) */
+@media (max-width: 650px) {
+    .reader-toolbar {
+        gap: 2px !important;
+        padding: 5px 2px !important;
+    }
+    
     /* Dynamically shrink the playback center controls */
     .toolbar-center > div {
-        padding: 2px 8px !important;
+        padding: 2px 5px !important;
         gap: 2px !important;
     }
     .toolbar-center .btn-icon, .toolbar-right .btn-icon {
-        padding: 0.4rem !important;
+        padding: 0.3rem !important;
     }
     .toolbar-center .btn-primary {
-        width: 34px !important;
-        height: 34px !important;
+        width: 32px !important;
+        height: 32px !important;
     }
-    /* Keep speed slider visible as requested by user */
     #pageIndicator {
         font-size: 0.75rem !important;
         min-width: 30px !important;
