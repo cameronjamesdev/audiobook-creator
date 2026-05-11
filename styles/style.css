@@ -272,8 +272,8 @@ button { font-family: 'Inter', sans-serif; cursor: pointer; border-radius: 8px; 
 .action-btn i { width: 14px; height: 14px; }
 
 /* GLOBAL FULLSCREEN HIDING RULES */
-.panel-reader:fullscreen .toolbar-left,
-.panel-reader.fake-fullscreen .toolbar-left,
+.panel-reader:fullscreen .badge,
+.panel-reader.fake-fullscreen .badge,
 .panel-reader:fullscreen .action-btn,
 .panel-reader.fake-fullscreen .action-btn,
 .panel-reader:fullscreen .toolbar-divider,
@@ -283,7 +283,14 @@ button { font-family: 'Inter', sans-serif; cursor: pointer; border-radius: 8px; 
     display: none !important;
 }
 
-/* In Fullscreen mode, align the center/right to extreme edges */
+/* In Fullscreen mode, use the empty left toolbar to perfectly balance the layout */
+.panel-reader:fullscreen .toolbar-left,
+.panel-reader.fake-fullscreen .toolbar-left,
+.panel-reader:fullscreen .toolbar-right,
+.panel-reader.fake-fullscreen .toolbar-right {
+    flex: 1;
+}
+
 .panel-reader:fullscreen .reader-toolbar,
 .panel-reader.fake-fullscreen .reader-toolbar {
     justify-content: space-between;
