@@ -866,9 +866,7 @@ ${textBlock}
 
     toggleFullscreen() {
         const reader = document.querySelector('.panel-reader');
-        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
         
-        // Helper to attempt forcing landscape orientation
         const lockLandscape = () => {
             if (window.screen && window.screen.orientation && window.screen.orientation.lock) {
                 window.screen.orientation.lock('landscape').catch(() => {});
@@ -881,29 +879,33 @@ ${textBlock}
             }
         };
         
-        // Native fallback check for iOS devices that reject fullscreen on non-video elements
-        if (isIOS || (!document.fullscreenEnabled && !reader.webkitRequestFullscreen)) {
-            reader.classList.toggle('fake-fullscreen');
-            if (reader.classList.contains('fake-fullscreen')) {
-                lockLandscape();
-            } else {
-                unlockOrientation();
-            }
+        // Always handle exiting fake-fullscreen if it's currently active (iPhone fallback)
+        if (reader.classList.contains('fake-fullscreen')) {
+            reader.classList.remove('fake-fullscreen');
+            unlockOrientation();
             return;
         }
 
         if (!document.fullscreenElement && !document.webkitFullscreenElement && !document.msFullscreenElement) {
             const req = reader.requestFullscreen || reader.webkitRequestFullscreen || reader.msRequestFullscreen;
             if (req) {
-                req.call(reader).then(() => {
-                    lockLandscape();
-                }).catch(err => {
-                    console.warn("Fullscreen failed, using fake fullscreen fallback", err);
-                    reader.classList.add('fake-fullscreen');
-                    lockLandscape();
-                });
+                const promise = req.call(reader);
+                if (promise !== undefined) {
+                    promise.then(() => lockLandscape()).catch(err => {
+                        console.warn("Fullscreen rejected natively, using fake fallback", err);
+                        reader.classList.add('fake-fullscreen');
+                        lockLandscape();
+                    });
+                } else {
+                    lockLandscape(); // Older Safari doesn't return a promise
+                }
+            } else {
+                // If no fullscreen API exists (e.g. iPhone Safari), fallback to fake fullscreen
+                reader.classList.add('fake-fullscreen');
+                lockLandscape();
             }
         } else {
+            // Exit native fullscreen
             const exit = document.exitFullscreen || document.webkitExitFullscreen || document.msExitFullscreen;
             if (exit) exit.call(document);
             if (window.screen && window.screen.orientation && window.screen.orientation.unlock) {
