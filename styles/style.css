@@ -248,20 +248,22 @@ button { font-family: 'Inter', sans-serif; cursor: pointer; border-radius: 8px; 
 }
 
 .reader-toolbar {
-    min-height: 70px; height: auto; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;
+    min-height: 70px; height: auto; display: flex; justify-content: space-between; align-items: center; flex-wrap: nowrap; gap: 15px;
     padding: 10px 2rem; border-bottom: 1px solid var(--border-glass); background: rgba(0,0,0,0.02);
+    overflow-x: auto; scrollbar-width: none;
 }
+.reader-toolbar::-webkit-scrollbar { display: none; }
 
 .toolbar-left {
-    display: flex; gap: 1rem; align-items: center; flex: 1; justify-content: flex-start; min-width: max-content;
+    display: flex; gap: 1rem; align-items: center; flex: 0 1 auto; justify-content: flex-start; min-width: 0;
 }
 
 .toolbar-center {
-    display: flex; align-items: center; justify-content: center; flex: 1; min-width: 400px;
+    display: flex; align-items: center; justify-content: center; flex: 0 1 auto; min-width: 0;
 }
 
 .toolbar-right {
-    display: flex; align-items: center; justify-content: flex-end; gap: 0.5rem; flex: 1; min-width: max-content;
+    display: flex; align-items: center; justify-content: flex-end; gap: 0.5rem; flex: 0 1 auto; min-width: 0;
 }
 
 .action-btn {
@@ -269,37 +271,22 @@ button { font-family: 'Inter', sans-serif; cursor: pointer; border-radius: 8px; 
 }
 .action-btn i { width: 14px; height: 14px; }
 
-@container (max-width: 850px) {
-    .reader-toolbar {
-        justify-content: center;
-    }
-    .toolbar-center {
-        order: -1;
-        flex: 100%;
-        margin-top: 0;
-        margin-bottom: 10px;
-    }
-    .toolbar-left {
-        order: 2;
-        flex: 1;
-        min-width: 0;
-        justify-content: center;
-    }
-    .toolbar-right {
-        order: 3;
-        flex: 1;
-        min-width: 0;
-        justify-content: center;
-        flex-wrap: wrap;
-    }
-    .toolbar-divider { display: none; }
+/* GLOBAL FULLSCREEN HIDING RULES */
+.panel-reader:fullscreen .toolbar-left,
+.panel-reader.fake-fullscreen .toolbar-left,
+.panel-reader:fullscreen .action-btn,
+.panel-reader.fake-fullscreen .action-btn,
+.panel-reader:fullscreen .toolbar-divider,
+.panel-reader.fake-fullscreen .toolbar-divider,
+.panel-reader:fullscreen .desktop-toggle-btn,
+.panel-reader.fake-fullscreen .desktop-toggle-btn {
+    display: none !important;
 }
 
-@container (max-width: 500px) {
-    .toolbar-left, .toolbar-right {
-        flex: 100%;
-        margin-bottom: 5px;
-    }
+/* In Fullscreen mode, align the center/right to extreme edges */
+.panel-reader:fullscreen .reader-toolbar,
+.panel-reader.fake-fullscreen .reader-toolbar {
+    justify-content: space-between;
 }
 
 .badge { padding: 0.5rem 1rem; border-radius: 20px; font-size: 0.85rem; background: rgba(125,125,125,0.1); color: var(--text-app-muted); font-weight: 600;}
@@ -712,9 +699,17 @@ button { font-family: 'Inter', sans-serif; cursor: pointer; border-radius: 8px; 
     }
 }
 
-/* Small Desktop & iPad Landscape */
-@media (max-width: 1024px) {
+/* Hide Theme and Page badges early on iPads and smaller laptops */
+@media (max-width: 1400px) {
     .toolbar-left .badge {
+        display: none !important;
+    }
+}
+
+/* Hide Save and Word buttons on smaller iPads and tablets */
+@media (max-width: 1100px) {
+    .toolbar-right .action-btn,
+    .toolbar-right .toolbar-divider {
         display: none !important;
     }
 }
@@ -723,7 +718,6 @@ button { font-family: 'Inter', sans-serif; cursor: pointer; border-radius: 8px; 
 @media (max-width: 800px) {
     .app-container {
         width: 200vw;
-        /* Flex children act as 50% of the 200vw width */
     }
     
     .app-container.viewing-reader {
@@ -768,6 +762,7 @@ button { font-family: 'Inter', sans-serif; cursor: pointer; border-radius: 8px; 
         padding: 2rem;
         max-width: 90%;
     }
+    
     /* Single-Row Mobile Layout Priority */
     .reader-toolbar {
         flex-direction: row;
@@ -784,9 +779,6 @@ button { font-family: 'Inter', sans-serif; cursor: pointer; border-radius: 8px; 
         gap: 5px;
         flex: 0 1 auto;
     }
-    .toolbar-left .badge {
-        display: none !important; /* Priority 1: Hide badges */
-    }
     .toolbar-center {
         width: auto;
         flex: 0 1 auto;
@@ -797,18 +789,6 @@ button { font-family: 'Inter', sans-serif; cursor: pointer; border-radius: 8px; 
         flex: 0 1 auto;
         margin-top: 0;
         gap: 5px;
-    }
-    
-    /* Priority 2: Hide Save and Word buttons */
-    .toolbar-right .action-btn,
-    .toolbar-right .toolbar-divider {
-        display: none !important;
-    }
-    
-    /* Hide Options buttons when in Fullscreen on mobile */
-    .panel-reader:fullscreen .desktop-toggle-btn,
-    .panel-reader.fake-fullscreen .desktop-toggle-btn {
-        display: none !important;
     }
     
     /* Fix Fake Fullscreen Black Screen Bug */
