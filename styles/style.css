@@ -303,7 +303,7 @@ button { font-family: 'Inter', sans-serif; cursor: pointer; border-radius: 8px; 
 .reader-container {
     flex: 1;
     overflow-y: auto;
-    padding: 3rem 2rem;
+    padding: 2rem 2rem;
     display: flex;
     justify-content: center;
 }

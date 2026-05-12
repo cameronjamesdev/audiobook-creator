@@ -710,12 +710,15 @@ ${textBlock}
         let processedContent = page.html_content || '';
         
         let html = '<div class="page-block">';
-        if (page.title) html += '<h2 class="page-header" style="color: var(--page-accent); line-height: 1.1;">' + page.title + '</h2>';
-        if (page.meta) html += '<div class="page-meta" style="margin-top: 5px; color: var(--page-color-muted); font-style: italic; border-bottom: 1px solid var(--border-glass); padding-bottom: 10px;"><span>' + page.meta + '</span></div>';
-        html += statsHtml;
-        html += '<div class="page-content" style="flex: 1; overflow-y: auto; padding-right: 15px;">' + processedContent + '</div>';
-        if (spellFooterHtml) html += `<div class="spell-footer" style="margin-top: 1.2rem; padding-top: 0.6rem; border-top: 1px solid var(--border-glass);">${spellFooterHtml}</div>`;
-        if (page.footer) html += '<div class="page-footer">' + page.footer + '</div>';
+        let innerHtml = '';
+        if (page.title) innerHtml += '<h2 class="page-header" style="color: var(--page-accent); line-height: 1.1; margin-top: 0;">' + page.title + '</h2>';
+        if (page.meta) innerHtml += '<div class="page-meta" style="margin-top: 5px; color: var(--page-color-muted); font-style: italic; border-bottom: 1px solid var(--border-glass); padding-bottom: 10px; margin-bottom: 15px;"><span>' + page.meta + '</span></div>';
+        innerHtml += statsHtml;
+        innerHtml += processedContent;
+        if (spellFooterHtml) innerHtml += `<div class="spell-footer" style="margin-top: 1.2rem; padding-top: 0.6rem; border-top: 1px solid var(--border-glass);">${spellFooterHtml}</div>`;
+        
+        html += '<div class="page-content" style="flex: 1; overflow-y: auto; padding-right: 15px;">' + innerHtml + '</div>';
+        if (page.footer) html += '<div class="page-footer" style="margin-top: 10px;">' + page.footer + '</div>';
         html += '</div>';
         
         return html;
@@ -964,7 +967,8 @@ ${textBlock}
         const headerNodes = [stage.querySelector('.page-header'), stage.querySelector('.page-meta')];
         // Include stats box rows so Casting Time, Range etc. are read aloud
         const statsNodes = Array.from(stage.querySelectorAll('.page-stats div'));
-        const contentNodes = Array.from(stage.querySelectorAll('.page-content > *:not(table)'));
+        // Exclude the header/meta/stats/footer from the generic content query to prevent double-reading
+        const contentNodes = Array.from(stage.querySelectorAll('.page-content > *:not(table):not(.page-header):not(.page-meta):not(.page-stats):not(.spell-footer)'));
         // Include spell footer (Classes / Sourcebook) at the end
         const spellFooterNodes = Array.from(stage.querySelectorAll('.spell-footer div'));
         
@@ -1022,18 +1026,30 @@ ${textBlock}
                 continue;
             }
 
-            // Update Highlight UI & Auto-Scroll — snaps to top of paragraph so no text is cut mid-line
+            // Update Highlight UI
             document.querySelectorAll('.active-reading-highlight').forEach(el => el.classList.remove('active-reading-highlight'));
             node.classList.add('active-reading-highlight');
             
-            // Scroll within .page-content so the active node appears near the top with a small gap
+            // Forgiving Auto-Scroll — only scroll if the active paragraph hits the bottom 35% of the screen
             const pageContent = node.closest('.page-content');
             if (pageContent) {
                 const nodeTop = node.offsetTop - pageContent.offsetTop;
-                const gapPx = 16; // small breathing room above the highlighted paragraph
-                pageContent.scrollTo({ top: Math.max(0, nodeTop - gapPx), behavior: 'smooth' });
+                const nodeBottom = nodeTop + node.offsetHeight;
+                const currentScroll = pageContent.scrollTop;
+                const viewHeight = pageContent.clientHeight;
+                
+                // Scroll if the bottom of the text is past 65% of the visible window
+                const lowerThreshold = currentScroll + (viewHeight * 0.65);
+                
+                if (nodeTop < currentScroll) {
+                    // Node is above current view (user scrolled away), snap it back
+                    pageContent.scrollTo({ top: Math.max(0, nodeTop - 16), behavior: 'smooth' });
+                } else if (nodeBottom > lowerThreshold) {
+                    // Node is too far down, bring it up near the top
+                    pageContent.scrollTo({ top: Math.max(0, nodeTop - 16), behavior: 'smooth' });
+                }
             } else {
-                node.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                node.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
             }
             
             sub.textContent = "Reading...";
