@@ -15,7 +15,7 @@ const db = window.firebase.firestore();
 // ── Core API Keys ─────────────────────────────────────────────────────────────
 // Managed purely in backend code instead of user-facing settings
 const SYSTEM_KEYS = {
-    gemini: "AIzaSyC2lnOg7DR1-4NoryJqRgbk4JOxN6nytw8",
+    gemini: "AQ.Ab8RN6KZ3SuiIJj0ndryL_pLO4xXQQHMEpZtaluVLfmNeoD5xQ",
     openai: "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"
 };
 
