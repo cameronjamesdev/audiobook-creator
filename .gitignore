@@ -13,3 +13,6 @@ desktop.ini
 
 # Node (future-proofing)
 node_modules/
+
+# Local config containing secrets
+scripts/config.js
