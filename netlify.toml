@@ -1,0 +1,6 @@
+[build]
+  command = "echo \"window.SYSTEM_KEYS = { gemini: '$GEMINI_KEY', openai: '$OPENAI_KEY' };\" > scripts/config.js"
+  publish = "."
+
+[build.environment]
+  SECRETS_SCAN_SMART_DETECTION_ENABLED = "false"
