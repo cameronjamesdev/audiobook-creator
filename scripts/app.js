@@ -1558,7 +1558,7 @@ ${textBlock}
             `;
         }
 
-        let allHtml = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8">${customStyles}</head><body${useDndStyle ? ' style="background-color: #262c28; color: #dbcaba; font-family: Georgia, serif;"' : ''}>`;
+        let allHtml = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8">${customStyles}</head><body${useDndStyle ? ' bgcolor="#262c28" text="#dbcaba" style="background-color: #262c28; color: #dbcaba; font-family: Georgia, serif;"' : ''}>`;
         this.pages.forEach(p => {
             allHtml += '<div' + (useDndStyle ? ' style="background-color: #262c28; color: #dbcaba; padding: 20px;"' : '') + '>' + this.renderPageHTML(p) + '</div><br clear="all" style="page-break-before:always" />';
         });
