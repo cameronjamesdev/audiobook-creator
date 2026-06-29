@@ -1542,10 +1542,25 @@ ${textBlock}
         }
     },
 
-    downloadWord() {
+    async downloadWord() {
         if (this.pages.length === 0) return alert("Nothing to export.");
         
-        const useDndStyle = document.getElementById('exportDndStyle') && document.getElementById('exportDndStyle').checked;
+        const selection = await this.showModal({
+            title: "Export Word Document",
+            description: "Choose your preferred formatting for the Word export.",
+            fields: [
+                {
+                    label: "Formatting Options",
+                    type: "checkboxList",
+                    items: [
+                        { id: "dark_academia", label: "Use D&D Format (Dark Academia)", checked: true }
+                    ]
+                }
+            ]
+        });
+
+        if (!selection) return; // User cancelled
+        const useDndStyle = selection.includes("dark_academia");
         
         let customStyles = '';
         if (useDndStyle) {
