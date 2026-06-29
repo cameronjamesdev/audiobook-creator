@@ -5,26 +5,22 @@ If you are a new AI assistant instance starting a fresh chat, read this document
 ---
 
 ## Project Structure & Paths
-We have physically separated the codebase into two distinct folders on the user's computer:
+We have successfully consolidated the codebase into one primary folder on your computer to leverage Git branches instead of separate physical copies.
 
-1. **Personal Version (Do NOT touch unless explicitly requested):**
-   * **Path:** `C:\Users\camer\OneDrive\Documents\Audiobook Creator - Personal`
-   * **Git Branch:** `main`
-   * **GitHub Repo:** `cameronjamesdev/audiobook-creator` (branch `main`)
-   * **Hosting:** Paid Netlify site deploying from the `main` branch.
+**Master Directory:** `C:\Users\camer\OneDrive\Documents\Audiobook Creator`
+**GitHub Repo:** `cameronjamesdev/audiobook-creator`
+
+1. **Personal Version (Branch: `main`)**
    * **Behavior:** Uses hardcoded logins and makes direct client-side API calls.
+   * **Hosting:** Paid Netlify site automatically deploying from the `main` branch.
+   * **Rule:** Do NOT commit SaaS backend or Firebase configurations to this branch.
 
-2. **SaaS/Production Version (Perform ALL SaaS coding here):**
-   * **Path:** `C:\Users\camer\OneDrive\Documents\Audiobook Creator - SaaS`
-   * **Git Branch:** `saas-production`
-   * **GitHub Repo:** `cameronjamesdev/audiobook-creator` (branch `saas-production`)
-   * **Hosting:** Will be hosted on Firebase Hosting.
-   * **Behavior:** Will use Firebase Auth and secure Cloud Functions.
+2. **SaaS/Production Version (Branch: `saas-production`)**
+   * **Behavior:** Uses Firebase Auth and secure Cloud Functions.
+   * **Hosting:** Will be hosted on Firebase Hosting (or Netlify configured for this branch).
+   * **Rule:** Perform ALL SaaS coding and Stripe integration in this branch.
 
-3. **Backup Folder (Safety copy):**
-   * **Path:** `C:\Users\camer\OneDrive\Documents\Audiobook Creator - Backup`
-   * **Note:** Purely static offline backup.
-
+*(Note: There may still be a static `Audiobook Creator - Backup` folder on the computer, but it is purely an offline safety copy).*
 ---
 
 ## Configuration & Credentials
