@@ -1171,6 +1171,7 @@ ${textBlock}
             const cancelBtn = document.getElementById('modalCancelBtn');
             
             titleEl.textContent = options.title || "Input";
+            saveBtn.textContent = options.saveText || "Save";
             if (options.description) {
                 descEl.textContent = options.description;
                 descEl.style.display = 'block';
@@ -1548,6 +1549,7 @@ ${textBlock}
         const selection = await this.showModal({
             title: "Export Word Document",
             description: "Choose your preferred formatting for the Word export.",
+            saveText: "Export",
             fields: [
                 {
                     label: "Formatting Options",
